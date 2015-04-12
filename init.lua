@@ -140,7 +140,9 @@ function thirsty.read_stash()
     local str       = file:read()
     local contents  = minetest.deserialize(str)
     if contents then 
-        thirsty.players = contents.players
+        if contents.players then
+            thirsty.players = contents.players
+        end
     end
     file:close()
 end
