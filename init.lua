@@ -30,6 +30,7 @@ thirsty = {
     -- Configuration variables
     tick_time = 0.5,
     thirst_per_second = 1.0 / 20.0,
+    damage_per_second = 1.0 / 10.0, -- when out of thirst bar
     stand_still_for_drink = 1.0,
     stand_still_for_afk = 120.0, -- 2 Minutes
 
@@ -46,6 +47,7 @@ thirsty = {
             thirst = 20,
             last_pos = '-10:3',
             time_in_pos = 0.0,
+            pending_dmg = 0.0,
         }
         --]]
     },
@@ -72,6 +74,7 @@ minetest.register_on_joinplayer(function(player)
             thirst = 20,
             last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
             time_in_pos = 0.0,
+            pending_dmg = 0.0,
         }
     end
     hb.init_hudbar(player, 'thirst', thirsty.players[name].thirst, 20, false)
@@ -111,12 +114,29 @@ minetest.register_globalstep(function(dtime)
                 if pl.time_in_pos < thirsty.stand_still_for_afk then
                     -- only get thirsty if not AFK
                     pl.thirst = pl.thirst - thirsty.thirst_per_second * thirsty.tick_time
-                    if pl.thirst< 0 then pl.thirst = 0 end
+                    if pl.thirst < 0 then pl.thirst = 0 end
                     --print("Lowering thirst by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.thirst)
                 end
             end
             -- should we only update the hud on an actual change?
             hb.change_hudbar(player, 'thirst', math.ceil(pl.thirst), 20)
+
+            -- damage, if enabled
+            if minetest.setting_getbool("enable_damage") then
+                -- maybe not the best way to do this, but it does mean
+                -- we can do anything with one tick loop
+                if pl.thirst <= 0.0 then
+                    pl.pending_dmg = pl.pending_dmg + thirsty.damage_per_second * thirsty.tick_time
+                    if pl.pending_dmg > 1.0 then
+                        local dmg = math.floor(pl.pending_dmg)
+                        pl.pending_dmg = pl.pending_dmg - dmg
+                        player:set_hp( player:get_hp() - dmg )
+                    end
+                else
+                    -- forget any pending damage when not thirsty
+                    pl.pending_dmg = 0.0
+                end
+            end
         end
     end
 end)
