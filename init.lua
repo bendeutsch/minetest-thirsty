@@ -50,6 +50,8 @@ thirsty = {
         --]]
     },
 
+    stash_filename = 'thirsty.mt',
+
     -- general settings
     time_next_tick = 0.0,
 }
@@ -62,14 +64,17 @@ hb.register_hudbar('thirst', 0xffffff, "Thirst", {
 }, 20, 20, false)
 
 minetest.register_on_joinplayer(function(player)
-    hb.init_hudbar(player, 'thirst', 20, 20, false)
     local name = player:get_player_name()
-    local pos = player:getpos()
-    thirsty.players[name] = {
-        thirst = 20,
-        last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
-        time_in_pos = 0.0,
-    }
+    -- default entry for new players
+    if not thirsty.players[name] then
+        local pos = player:getpos()
+        thirsty.players[name] = {
+            thirst = 20,
+            last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
+            time_in_pos = 0.0,
+        }
+    end
+    hb.init_hudbar(player, 'thirst', thirsty.players[name].thirst, 20, false)
 end)
 
 minetest.register_globalstep(function(dtime)
@@ -115,3 +120,47 @@ minetest.register_globalstep(function(dtime)
         end
     end
 end)
+
+--[[
+
+Stash: persist the thirst values in a file in the world directory.
+
+If this is missing or corrupted, then no worries: nobody's thirsty ;-)
+
+--]]
+
+function thirsty.read_stash()
+    local filename = minetest.get_worldpath() .. "/" .. thirsty.stash_filename
+    local file, err = io.open(filename, "r")
+    if not file then
+        -- no problem, it's just not there
+        -- TODO: or parse err?
+        return
+    end
+    local str       = file:read()
+    local contents  = minetest.deserialize(str)
+    if contents then 
+        thirsty.players = contents.players
+    end
+    file:close()
+end
+
+function thirsty.write_stash()
+    local filename = minetest.get_worldpath() .. "/" .. thirsty.stash_filename
+    local file, err = io.open(filename, "w")
+    if not file then
+        minetest.log("error", "Thirsty: could not write " .. thirsty.stash_filename .. ": " ..err)
+        return
+    end
+    local str = minetest.serialize({
+        -- TODO: just the 'thirst' values
+        players = thirsty.players
+    })
+    file:write(str)
+    file:close()
+end
+
+-- read on startup
+thirsty.read_stash()
+-- write on shutdown
+minetest.register_on_shutdown(thirsty.write_stash)
