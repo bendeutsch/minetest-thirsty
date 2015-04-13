@@ -3,7 +3,7 @@ Thirsty [thirsty]
 
 A Minetest mod that adds a "thirst" mechanic.
 
-Version: 0.1.0
+Version: 0.2.1
 
 License: LGPL 2.1 or later
 
@@ -23,12 +23,16 @@ preparation and infrastructure. Players will now have an incentive
 to build their base next to water (or add some water to their base),
 and/or take some water with them when mining or travelling.
 
-Future plans
-------------
+Current behavior
+----------------
 
 **Tier 0**: stand in water (running or standing) to slowly drink.
 You may not move during drinking (or you could cross an ocean without
 getting thirsty).
+
+
+Future plans
+------------
 
 **Tier 1**: use a cup (e.g. from `vessels`) on water to instantly fill
 your thirst bar.
