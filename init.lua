@@ -101,17 +101,20 @@ minetest.register_globalstep(function(dtime)
                 pl.last_pos = pos_hash
                 pl.time_in_pos = 0.0
             end
+            local pl_standing = pl.time_in_pos > thirsty.stand_still_for_drink
+            local pl_afk      = pl.time_in_pos > thirsty.stand_still_for_afk
+            --print("Standing: " .. (pl_standing and 'true' or 'false' ) .. ", AFK: " .. (pl_afk and 'true' or 'false'))
 
             pos.y = pos.y + 0.1
             local node = minetest.get_node(pos)
             local drink_per_second = thirsty.drink_from_node[node.name]
-            if drink_per_second ~= nil and drink_per_second > 0 and pl.time_in_pos > thirsty.stand_still_for_drink then
+            if drink_per_second ~= nil and drink_per_second > 0 and pl_standing then
                 pl.thirst = pl.thirst + drink_per_second * thirsty.tick_time
                 -- Drinking from the ground won't give you more than max
                 if pl.thirst > 20 then pl.thirst = 20 end
                 --print("Raising thirst by "..(drink_per_second*thirsty.tick_time).." to "..pl.thirst)
             else
-                if pl.time_in_pos < thirsty.stand_still_for_afk then
+                if not pl_afk then
                     -- only get thirsty if not AFK
                     pl.thirst = pl.thirst - thirsty.thirst_per_second * thirsty.tick_time
                     if pl.thirst < 0 then pl.thirst = 0 end
@@ -125,8 +128,9 @@ minetest.register_globalstep(function(dtime)
             if minetest.setting_getbool("enable_damage") then
                 -- maybe not the best way to do this, but it does mean
                 -- we can do anything with one tick loop
-                if pl.thirst <= 0.0 then
+                if pl.thirst <= 0.0 and not pl_afk then
                     pl.pending_dmg = pl.pending_dmg + thirsty.damage_per_second * thirsty.tick_time
+                    --print("Pending damage at " .. pl.pending_dmg)
                     if pl.pending_dmg > 1.0 then
                         local dmg = math.floor(pl.pending_dmg)
                         pl.pending_dmg = pl.pending_dmg - dmg
