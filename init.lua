@@ -7,6 +7,9 @@ A mod that adds a "thirst" mechanic, similar to hunger.
 
 Copyright (C) 2015 Ben Deutsch <ben@bendeutsch.de>
 
+License
+-------
+
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License as published by the Free Software Foundation; either
@@ -22,6 +25,14 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 USA
 
+Terminology: "Thirst" vs. "hydration"
+-------------------------------------
+
+"Thirst" is the absence of "hydration" (a term suggested by
+everamzah on the Minetest forums, thanks!). The overall mechanic
+is still called "thirst", but the visible bar is that of
+"hydration", filled with "hydro points".
+
 ]]
 
 -- the main module variable
@@ -30,12 +41,12 @@ thirsty = {
     -- Configuration variables
     tick_time = 0.5,
     thirst_per_second = 1.0 / 20.0,
-    damage_per_second = 1.0 / 10.0, -- when out of thirst bar
+    damage_per_second = 1.0 / 10.0, -- when out of hydration
     stand_still_for_drink = 1.0,
     stand_still_for_afk = 120.0, -- 2 Minutes
 
     drink_from_node = {
-        -- value: thirst regen per second
+        -- value: hydration regen per second
         ['default:water_source'] = 0.5,
         ['default:water_flowing'] = 0.5,
     },
@@ -44,7 +55,7 @@ thirsty = {
     players = {
         --[[
         name = {
-            thirst = 20,
+            hydro = 20,
             last_pos = '-10:3',
             time_in_pos = 0.0,
             pending_dmg = 0.0,
@@ -52,7 +63,7 @@ thirsty = {
         --]]
     },
 
-    stash_filename = 'thirsty.mt',
+    stash_filename = 'thirsty.dat',
 
     -- general settings
     time_next_tick = 0.0,
@@ -60,7 +71,7 @@ thirsty = {
 
 thirsty.time_next_tick = thirsty.tick_time
 
-hb.register_hudbar('thirst', 0xffffff, "Thirst", {
+hb.register_hudbar('thirst', 0xffffff, "Hydration", {
     bar = 'thirsty_hudbars_bar.png',
     icon = 'thirsty_cup_100_16.png'
 }, 20, 20, false)
@@ -71,13 +82,13 @@ minetest.register_on_joinplayer(function(player)
     if not thirsty.players[name] then
         local pos = player:getpos()
         thirsty.players[name] = {
-            thirst = 20,
+            hydro = 20,
             last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
             time_in_pos = 0.0,
             pending_dmg = 0.0,
         }
     end
-    hb.init_hudbar(player, 'thirst', thirsty.players[name].thirst, 20, false)
+    hb.init_hudbar(player, 'thirst', thirsty.players[name].hydro, 20, false)
 end)
 
 minetest.register_globalstep(function(dtime)
@@ -109,26 +120,26 @@ minetest.register_globalstep(function(dtime)
             local node = minetest.get_node(pos)
             local drink_per_second = thirsty.drink_from_node[node.name]
             if drink_per_second ~= nil and drink_per_second > 0 and pl_standing then
-                pl.thirst = pl.thirst + drink_per_second * thirsty.tick_time
+                pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
                 -- Drinking from the ground won't give you more than max
-                if pl.thirst > 20 then pl.thirst = 20 end
-                --print("Raising thirst by "..(drink_per_second*thirsty.tick_time).." to "..pl.thirst)
+                if pl.hydro > 20 then pl.hydro = 20 end
+                --print("Raising hydration by "..(drink_per_second*thirsty.tick_time).." to "..pl.hydro)
             else
                 if not pl_afk then
                     -- only get thirsty if not AFK
-                    pl.thirst = pl.thirst - thirsty.thirst_per_second * thirsty.tick_time
-                    if pl.thirst < 0 then pl.thirst = 0 end
-                    --print("Lowering thirst by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.thirst)
+                    pl.hydro = pl.hydro - thirsty.thirst_per_second * thirsty.tick_time
+                    if pl.hydro < 0 then pl.hydro = 0 end
+                    --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
                 end
             end
             -- should we only update the hud on an actual change?
-            hb.change_hudbar(player, 'thirst', math.ceil(pl.thirst), 20)
+            hb.change_hudbar(player, 'thirst', math.ceil(pl.hydro), 20)
 
             -- damage, if enabled
             if minetest.setting_getbool("enable_damage") then
                 -- maybe not the best way to do this, but it does mean
                 -- we can do anything with one tick loop
-                if pl.thirst <= 0.0 and not pl_afk then
+                if pl.hydro <= 0.0 and not pl_afk then
                     pl.pending_dmg = pl.pending_dmg + thirsty.damage_per_second * thirsty.tick_time
                     --print("Pending damage at " .. pl.pending_dmg)
                     if pl.pending_dmg > 1.0 then
@@ -147,7 +158,7 @@ end)
 
 --[[
 
-Stash: persist the thirst values in a file in the world directory.
+Stash: persist the hydration values in a file in the world directory.
 
 If this is missing or corrupted, then no worries: nobody's thirsty ;-)
 
@@ -161,11 +172,20 @@ function thirsty.read_stash()
         -- TODO: or parse err?
         return
     end
-    local str       = file:read()
-    local contents  = minetest.deserialize(str)
-    if contents then 
-        if contents.players then
-            thirsty.players = contents.players
+    thirsty.players = {}
+    for line in file:lines() do
+        if string.match(line, '^%-%-') then
+            -- comment, ignore
+        elseif string.match(line, '^P [%d.]+ [%d.]+ .+') then
+            -- player line
+            -- is matching again really the best solution?
+            local hydro, dmg, name = string.match(line, '^P ([%d.]+) ([%d.]+) (.+)')
+            thirsty.players[name] = {
+                hydro = tonumber(hydro),
+                last_pos = '0:0', -- not true, but no matter
+                time_in_pos = 0.0,
+                pending_dmg = tonumber(dmg),
+            }
         end
     end
     file:close()
@@ -178,11 +198,13 @@ function thirsty.write_stash()
         minetest.log("error", "Thirsty: could not write " .. thirsty.stash_filename .. ": " ..err)
         return
     end
-    local str = minetest.serialize({
-        -- TODO: just the 'thirst' values
-        players = thirsty.players
-    })
-    file:write(str)
+    file:write('-- Stash file for Minetest mod [thirsty] --\n')
+    -- write players:
+    -- P <hydro> <pending_dmg> <name>
+    file:write('-- Player format: "P <hydro> <pending damage> <name>"\n')
+    for name, data in pairs(thirsty.players) do
+        file:write("P " .. data.hydro .. " " .. data.pending_dmg .. " " .. name .. "\n")
+    end
     file:close()
 end
 

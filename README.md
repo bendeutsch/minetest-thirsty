@@ -23,6 +23,16 @@ preparation and infrastructure. Players will now have an incentive
 to build their base next to water (or add some water to their base),
 and/or take some water with them when mining or travelling.
 
+Terminology: "Thirst" vs. "hydration"
+-------------------------------------
+
+"Thirst" is the absence of "hydration" (a term suggested by
+everamzah on the Minetest forums, thanks!). The overall mechanic
+is still called "thirst", but the visible bar is that of
+"hydration", meaning a full bar represents full hydration, not full
+thirst. Players lose hydration (or "hydro points") over time, and
+gain hydration when drinking.
+
 Current behavior
 ----------------
 
@@ -35,19 +45,19 @@ Future plans
 ------------
 
 **Tier 1**: use a cup (e.g. from `vessels`) on water to instantly fill
-your thirst bar.
+your hydration.
 
-**Tier 2**: craftable water skin: holds three full thirst bars worth of
-water.
+**Tier 2**: craftable water skin: holds three full hydration bars worth
+of water.
 
 **Tier 3**: placeable drinking fountain / wash basin node: instantly
-fills your thirst bar when used.
+fills your hydration when used.
 
-**Tier 4+**: placeable fountain node(s) to fill the thirst bars of all
+**Tier 4+**: placeable fountain node(s) to fill the hydration of all
 players within range. Placing more nodes increases the range.
 
 **Tier 5**: craftable trinkets/gadgets/amulets that constantly keep your
-thirst bar filled when in your inventory, solving your thirst problem
+hydration filled when in your inventory, solving your thirst problem
 once and for all.
 
 Dependencies
