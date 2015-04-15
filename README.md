@@ -3,9 +3,11 @@ Thirsty [thirsty]
 
 A Minetest mod that adds a "thirst" mechanic.
 
-Version: 0.2.1
+Version: 0.3.0
 
-License: LGPL 2.1 or later
+License:
+  Code: LGPL 2.1 or later
+  Textures: CC-BY-SA
 
 Report bugs or request help on the forum topic.
 
@@ -40,12 +42,11 @@ Current behavior
 You may not move during drinking (or you could cross an ocean without
 getting thirsty).
 
+**Tier 1**: use a cup (e.g. from `vessels`) on water to instantly fill
+your hydration.
 
 Future plans
 ------------
-
-**Tier 1**: use a cup (e.g. from `vessels`) on water to instantly fill
-your hydration.
 
 **Tier 2**: craftable water skin: holds three full hydration bars worth
 of water.
@@ -63,6 +64,7 @@ once and for all.
 Dependencies
 ------------
 * hudbars: https://forum.minetest.net/viewtopic.php?f=11&t=11153 (preliminary, for easy HUD definitions)
+* vessels: https://forum.minetest.net/viewtopic.php?id=2574
 
 Installation
 ------------
