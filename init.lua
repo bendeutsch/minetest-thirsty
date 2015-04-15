@@ -91,6 +91,13 @@ minetest.register_on_joinplayer(function(player)
     hb.init_hudbar(player, 'thirst', thirsty.players[name].hydro, 20, false)
 end)
 
+--[[
+
+Main Loop (Tier 0)
+
+]]
+
+
 minetest.register_globalstep(function(dtime)
     -- get thirsty
     thirsty.time_next_tick = thirsty.time_next_tick - dtime
@@ -162,7 +169,7 @@ Stash: persist the hydration values in a file in the world directory.
 
 If this is missing or corrupted, then no worries: nobody's thirsty ;-)
 
---]]
+]]
 
 function thirsty.read_stash()
     local filename = minetest.get_worldpath() .. "/" .. thirsty.stash_filename
@@ -208,7 +215,62 @@ function thirsty.write_stash()
     file:close()
 end
 
+--[[
+
+Drinking containers (Tier 1)
+
+For now, augment the nodes from vessels to enable drinking on use.
+
+]]
+
+-- closure to capture old on_use handler
+function thirsty.on_use_drinking_container( old_on_use )
+    return function (itemstack, user, pointed_thing)
+        local node = minetest.get_node(pointed_thing.under)
+        if thirsty.drink_from_node[node.name] ~= nil then
+            -- we found something to drink!
+            local pl = thirsty.players[user:get_player_name()]
+            -- drink until we're full
+            -- Note: if hydro is > 20, don't lower it!
+            if pl.hydro < 20 then
+                pl.hydro = 20
+            end
+            -- call original on_use
+            if old_on_use ~= nil then
+                return old_on_use(itemstack, user, pointed_thing)
+            else
+                -- we're done, no item need be removed
+                return nil
+            end
+        end
+    end
+end
+
+function thirsty.augment_node_for_drinking( nodename )
+    -- clone the existing definition (shallow copy)
+    local new_definition = {}
+    for key, value in pairs(minetest.registered_nodes[nodename]) do
+        new_definition[key] = value
+    end
+    -- we need to be able to point at the water
+    new_definition.liquids_pointable = true
+    -- call closure generator with original on_use handler
+    new_definition.on_use = thirsty.on_use_drinking_container(
+        new_definition.on_use
+    )
+    -- overwrite the node definition with almost the original
+    minetest.register_node(':' .. nodename, new_definition)
+end
+
+-- add more nodes here
+
+thirsty.augment_node_for_drinking('vessels:drinking_glass')
+thirsty.augment_node_for_drinking('vessels:glass_bottle')
+thirsty.augment_node_for_drinking('vessels:steel_bottle')
+
 -- read on startup
 thirsty.read_stash()
 -- write on shutdown
 minetest.register_on_shutdown(thirsty.write_stash)
+
+
