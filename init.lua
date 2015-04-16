@@ -71,10 +71,34 @@ thirsty = {
 
 thirsty.time_next_tick = thirsty.tick_time
 
-hb.register_hudbar('thirst', 0xffffff, "Hydration", {
-    bar = 'thirsty_hudbars_bar.png',
-    icon = 'thirsty_cup_100_16.png'
-}, 20, 20, false)
+--[[
+
+HUD definitions
+
+Optionally from one of the supported mods
+
+]]
+
+if minetest.get_modpath("hudbars") then
+    hb.register_hudbar('thirst', 0xffffff, "Hydration", {
+        bar = 'thirsty_hudbars_bar.png',
+        icon = 'thirsty_cup_100_16.png'
+    }, 20, 20, false)
+    function thirsty.hud_init(player)
+        local name = player:get_player_name()
+        hb.init_hudbar(player, 'thirst', thirsty.players[name].hydro, 20, false)
+    end
+    function thirsty.hud_update(player, value)
+        local name = player:get_player_name()
+        hb.change_hudbar(player, 'thirst', math.ceil(value), 20)
+    end
+else
+    function thirsty.hud_init(player)
+    end
+    function thirsty.hud_update(player, value)
+    end
+end
+
 
 minetest.register_on_joinplayer(function(player)
     local name = player:get_player_name()
@@ -88,7 +112,7 @@ minetest.register_on_joinplayer(function(player)
             pending_dmg = 0.0,
         }
     end
-    hb.init_hudbar(player, 'thirst', thirsty.players[name].hydro, 20, false)
+    thirsty.hud_init(player)
 end)
 
 --[[
@@ -140,7 +164,7 @@ minetest.register_globalstep(function(dtime)
                 end
             end
             -- should we only update the hud on an actual change?
-            hb.change_hudbar(player, 'thirst', math.ceil(pl.hydro), 20)
+            thirsty.hud_update(player, pl.hydro)
 
             -- damage, if enabled
             if minetest.setting_getbool("enable_damage") then
