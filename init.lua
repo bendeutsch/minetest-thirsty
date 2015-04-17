@@ -86,16 +86,31 @@ if minetest.get_modpath("hudbars") then
     }, 20, 20, false)
     function thirsty.hud_init(player)
         local name = player:get_player_name()
-        hb.init_hudbar(player, 'thirst', thirsty.players[name].hydro, 20, false)
+        hb.init_hudbar(player, 'thirst', math.ceil(thirsty.players[name].hydro), 20, false)
     end
     function thirsty.hud_update(player, value)
         local name = player:get_player_name()
         hb.change_hudbar(player, 'thirst', math.ceil(value), 20)
     end
 else
+    -- 'builtin' hud
     function thirsty.hud_init(player)
+        -- above breath bar, for now
+        local name = player:get_player_name()
+        thirsty.players[name].hud_id = player:hud_add({
+            hud_elem_type = "statbar",
+            position = { x=0.5, y=1 },
+            text = "thirsty_cup_100_24.png",
+            number = math.ceil(thirsty.players[name].hydro),
+            direction = 0,
+            size = { x=24, y=24 },
+            offset = { x=25, y=-(48+24+16+32)},
+        })
     end
     function thirsty.hud_update(player, value)
+        local name = player:get_player_name()
+        local hud_id = thirsty.players[name].hud_id
+        player:hud_change(hud_id, 'number', math.ceil(value))
     end
 end
 
