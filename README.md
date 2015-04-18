@@ -63,7 +63,8 @@ once and for all.
 
 Dependencies
 ------------
-* hudbars: https://forum.minetest.net/viewtopic.php?f=11&t=11153 (preliminary, for easy HUD definitions)
+* hud (optional): https://forum.minetest.net/viewtopic.php?f=11&t=6342
+* hudbars (optional): https://forum.minetest.net/viewtopic.php?f=11&t=11153
 * vessels: https://forum.minetest.net/viewtopic.php?id=2574
 
 Installation

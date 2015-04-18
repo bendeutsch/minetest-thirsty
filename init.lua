@@ -79,6 +79,16 @@ Optionally from one of the supported mods
 
 ]]
 
+function thirsty.hud_clamp(value)
+    if value < 0 then
+        return 0
+    elseif value > 20 then
+        return 20
+    else
+        return math.ceil(value)
+    end
+end
+
 if minetest.get_modpath("hudbars") then
     hb.register_hudbar('thirst', 0xffffff, "Hydration", {
         bar = 'thirsty_hudbars_bar.png',
@@ -86,11 +96,33 @@ if minetest.get_modpath("hudbars") then
     }, 20, 20, false)
     function thirsty.hud_init(player)
         local name = player:get_player_name()
-        hb.init_hudbar(player, 'thirst', math.ceil(thirsty.players[name].hydro), 20, false)
+        hb.init_hudbar(player, 'thirst',
+            thirsty.hud_clamp(thirsty.players[name].hydro),
+        20, false)
     end
     function thirsty.hud_update(player, value)
         local name = player:get_player_name()
-        hb.change_hudbar(player, 'thirst', math.ceil(value), 20)
+        hb.change_hudbar(player, 'thirst', thirsty.hud_clamp(value), 20)
+    end
+elseif minetest.get_modpath("hud") then
+    -- API.txt
+    hud.register('thirst', {
+        hud_elem_type = "statbar",
+        position = { x=0.5, y=1 },
+        text = "thirsty_cup_100_24.png",
+        background = "thirsty_cup_0_24.png",
+        number = 20,
+        max = 20,
+        size = { x=24, y=24 },
+        offset = { x=25, y=-(48+24+16+32)},
+    })
+    function thirsty.hud_init(player)
+        -- automatic by [hud]
+    end
+    function thirsty.hud_update(player, value)
+        hud.change_item(player, 'thirst', {
+            number = thirsty.hud_clamp(value)
+        })
     end
 else
     -- 'builtin' hud
@@ -101,7 +133,7 @@ else
             hud_elem_type = "statbar",
             position = { x=0.5, y=1 },
             text = "thirsty_cup_100_24.png",
-            number = math.ceil(thirsty.players[name].hydro),
+            number = thirsty.hud_clamp(thirsty.players[name].hydro),
             direction = 0,
             size = { x=24, y=24 },
             offset = { x=25, y=-(48+24+16+32)},
@@ -110,7 +142,7 @@ else
     function thirsty.hud_update(player, value)
         local name = player:get_player_name()
         local hud_id = thirsty.players[name].hud_id
-        player:hud_change(hud_id, 'number', math.ceil(value))
+        player:hud_change(hud_id, 'number', thirsty.hud_clamp(value))
     end
 end
 
