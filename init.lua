@@ -341,11 +341,20 @@ function thirsty.augment_node_for_drinking( nodename )
     minetest.override_item(nodename, new_definition)
 end
 
--- add more nodes here
+if (minetest.get_modpath("vessels")) then
+    -- add "drinking" to vessels
+    thirsty.augment_node_for_drinking('vessels:drinking_glass')
+    thirsty.augment_node_for_drinking('vessels:glass_bottle')
+    thirsty.augment_node_for_drinking('vessels:steel_bottle')
+end
 
-thirsty.augment_node_for_drinking('vessels:drinking_glass')
-thirsty.augment_node_for_drinking('vessels:glass_bottle')
-thirsty.augment_node_for_drinking('vessels:steel_bottle')
+-- our own simple wooden bowl
+minetest.register_craftitem('thirsty:bowl', {
+    description = "Wooden bowl",
+    inventory_image = "thirsty_bowl_32.png",
+    liquids_pointable = true,
+    on_use = thirsty.on_use_drinking_container(nil),
+})
 
 -- read on startup
 thirsty.read_stash()
