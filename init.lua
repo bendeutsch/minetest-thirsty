@@ -301,10 +301,10 @@ function thirsty.on_use_drinking_container( old_on_use )
         if thirsty.drink_from_node[node.name] ~= nil then
             -- we found something to drink!
             local pl = thirsty.players[user:get_player_name()]
-            -- drink until we're full
-            -- Note: if hydro is > 20, don't lower it!
-            if pl.hydro < 20 then
-                pl.hydro = 20
+            -- drink until we're more than full
+            -- Note: if hydro is > 25, don't lower it!
+            if pl.hydro < 25 then
+                pl.hydro = 25
             end
             -- call original on_use
             if old_on_use ~= nil then
