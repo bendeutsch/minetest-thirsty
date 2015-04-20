@@ -162,6 +162,12 @@ minetest.register_on_joinplayer(function(player)
     thirsty.hud_init(player)
 end)
 
+minetest.register_on_dieplayer(function(player)
+    local name = player:get_player_name()
+    -- fill after death
+    thirsty.players[name].hydro = 20;
+end)
+
 --[[
 
 Main Loop (Tier 0)
@@ -176,6 +182,12 @@ minetest.register_globalstep(function(dtime)
         -- time for thirst
         thirsty.time_next_tick = thirsty.time_next_tick + thirsty.tick_time
         for _,player in ipairs(minetest.get_connected_players()) do
+
+            if player:get_hp() <= 0 then
+                -- dead players don't get thirsty, or full for that matter :-P
+                break
+            end
+
             local name = player:get_player_name()
             local pos  = player:getpos()
             local pl = thirsty.players[name]
