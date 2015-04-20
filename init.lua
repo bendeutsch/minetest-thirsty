@@ -330,19 +330,15 @@ function thirsty.on_use_drinking_container( old_on_use )
 end
 
 function thirsty.augment_node_for_drinking( nodename )
-    -- clone the existing definition (shallow copy)
     local new_definition = {}
-    for key, value in pairs(minetest.registered_nodes[nodename]) do
-        new_definition[key] = value
-    end
     -- we need to be able to point at the water
     new_definition.liquids_pointable = true
     -- call closure generator with original on_use handler
     new_definition.on_use = thirsty.on_use_drinking_container(
-        new_definition.on_use
+        minetest.registered_nodes[nodename].on_use
     )
     -- overwrite the node definition with almost the original
-    minetest.register_node(':' .. nodename, new_definition)
+    minetest.override_item(nodename, new_definition)
 end
 
 -- add more nodes here
