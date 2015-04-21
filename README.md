@@ -3,7 +3,7 @@ Thirsty [thirsty]
 
 A Minetest mod that adds a "thirst" mechanic.
 
-Version: 0.3.0
+Version: 0.4.0
 
 License:
   Code: LGPL 2.1 (see included LICENSE file)
@@ -65,7 +65,7 @@ Dependencies
 ------------
 * hud (optional): https://forum.minetest.net/viewtopic.php?f=11&t=6342
 * hudbars (optional): https://forum.minetest.net/viewtopic.php?f=11&t=11153
-* vessels: https://forum.minetest.net/viewtopic.php?id=2574
+* vessels (optional): https://forum.minetest.net/viewtopic.php?id=2574
 
 Installation
 ------------
