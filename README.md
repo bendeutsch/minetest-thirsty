@@ -6,8 +6,8 @@ A Minetest mod that adds a "thirst" mechanic.
 Version: 0.3.0
 
 License:
-  Code: LGPL 2.1 or later
-  Textures: CC-BY-SA
+  Code: LGPL 2.1 (see included LICENSE file)
+  Textures: CC-BY-SA (see http://creativecommons.org/licenses/by-sa/4.0/)
 
 Report bugs or request help on the forum topic.
 
