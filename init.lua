@@ -355,6 +355,13 @@ minetest.register_craftitem('thirsty:bowl', {
     liquids_pointable = true,
     on_use = thirsty.on_use_drinking_container(nil),
 })
+minetest.register_craft({
+    output = "thirsty:bowl",
+    recipe = {
+        {"group:wood", "", "group:wood"},
+        {"", "group:wood", ""}
+    }
+})
 
 -- read on startup
 thirsty.read_stash()
