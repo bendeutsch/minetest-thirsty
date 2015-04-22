@@ -332,6 +332,52 @@ function thirsty.on_use_drinking_container( old_on_use )
     end
 end
 
+function thirsty.on_use_canteen( capacity )
+    --[[ Use wear level / tool durability to show hydro content level
+         - a wear of 0     shows no durability bar -> empty
+         - a wear of 1     shows a full durability bar -> full
+         - a wear of 65535 shows an empty durability bar -> empty
+    ]]
+    return function (itemstack, user, pointed_thing)
+        local point_at_drink = false
+        if pointed_thing and pointed_thing.type == 'node' then
+            local node = minetest.get_node(pointed_thing.under)
+            if node and thirsty.drink_from_node[node.name] ~= nil then
+                point_at_drink = true
+            end
+        end
+        local name = user:get_player_name()
+        local pl = thirsty.players[name]
+        if point_at_drink then
+            -- fill it
+            itemstack:set_wear(1) -- "looks full"
+            -- drink as from a cup at the same time
+            if pl.hydro < 25 then
+                pl.hydro = 25
+                thirsty.hud_update(user, pl.hydro)
+            end
+        elseif itemstack:get_wear() ~= 0 then
+            -- drinking from it
+            local hydro_missing = 20 - pl.hydro;
+            if hydro_missing > 0 then 
+                local wear_missing = hydro_missing / capacity * 65535.0;
+                local wear         = itemstack:get_wear()
+                local new_wear     = math.ceil(math.max(wear + wear_missing, 1))
+                if (new_wear > 65534) then
+                    wear_missing = 65534 - wear
+                    new_wear = 65534
+                end
+                itemstack:set_wear(new_wear)
+                if wear_missing > 0 then -- rounding glitches?
+                    pl.hydro = pl.hydro + (wear_missing * capacity / 65535.0)
+                    thirsty.hud_update(user, pl.hydro)
+                end
+            end
+        end
+        return itemstack
+    end
+end
+
 function thirsty.augment_node_for_drinking( nodename )
     local new_definition = {}
     -- we need to be able to point at the water
@@ -366,6 +412,40 @@ minetest.register_craft({
         {"", "group:wood", ""}
     }
 })
+
+minetest.register_tool('thirsty:steel_canteen', {
+    description = 'Steel canteen',
+    inventory_image = "thirsty_steel_canteen_16.png",
+    liquids_pointable = true,
+    stack_max = 1,
+    on_use = thirsty.on_use_canteen(40),
+})
+
+minetest.register_tool('thirsty:bronze_canteen', {
+    description = 'Bronze canteen',
+    inventory_image = "thirsty_bronze_canteen_16.png",
+    liquids_pointable = true,
+    stack_max = 1,
+    on_use = thirsty.on_use_canteen(60),
+})
+
+minetest.register_craft({
+    output = "thirsty:steel_canteen",
+    recipe = {
+        { "group:wood", ""},
+        { "default:steel_ingot", "default:steel_ingot"},
+        { "default:steel_ingot", "default:steel_ingot"}
+    }
+})
+minetest.register_craft({
+    output = "thirsty:bronze_canteen",
+    recipe = {
+        { "group:wood", ""},
+        { "default:bronze_ingot", "default:steel_ingot"},
+        { "default:bronze_ingot", "default:steel_ingot"}
+    }
+})
+
 
 -- read on startup
 thirsty.read_stash()
