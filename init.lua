@@ -352,14 +352,15 @@ if (minetest.get_modpath("vessels")) then
 end
 
 -- our own simple wooden bowl
-minetest.register_craftitem('thirsty:bowl', {
+minetest.register_craftitem('thirsty:wooden_bowl', {
     description = "Wooden bowl",
-    inventory_image = "thirsty_bowl_32.png",
+    inventory_image = "thirsty_bowl_16.png",
     liquids_pointable = true,
     on_use = thirsty.on_use_drinking_container(nil),
 })
+
 minetest.register_craft({
-    output = "thirsty:bowl",
+    output = "thirsty:wooden_bowl",
     recipe = {
         {"group:wood", "", "group:wood"},
         {"", "group:wood", ""}
