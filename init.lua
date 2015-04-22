@@ -309,22 +309,25 @@ For now, augment the nodes from vessels to enable drinking on use.
 -- closure to capture old on_use handler
 function thirsty.on_use_drinking_container( old_on_use )
     return function (itemstack, user, pointed_thing)
-        local node = minetest.get_node(pointed_thing.under)
-        if thirsty.drink_from_node[node.name] ~= nil then
-            -- we found something to drink!
-            local pl = thirsty.players[user:get_player_name()]
-            -- drink until we're more than full
-            -- Note: if hydro is > 25, don't lower it!
-            if pl.hydro < 25 then
-                pl.hydro = 25
+        if pointed_thing and pointed_thing.type == 'node' then
+            local node = minetest.get_node(pointed_thing.under)
+            if thirsty.drink_from_node[node.name] ~= nil then
+                -- we found something to drink!
+                local pl = thirsty.players[user:get_player_name()]
+                -- drink until we're more than full
+                -- Note: if hydro is > 25, don't lower it!
+                if pl.hydro < 25 then
+                    pl.hydro = 25
+                    thirsty.hud_update(user, pl.hydro)
+                end
             end
-            -- call original on_use
-            if old_on_use ~= nil then
-                return old_on_use(itemstack, user, pointed_thing)
-            else
-                -- we're done, no item need be removed
-                return nil
-            end
+        end
+        -- call original on_use
+        if old_on_use ~= nil then
+            return old_on_use(itemstack, user, pointed_thing)
+        else
+            -- we're done, no item need be removed
+            return nil
         end
     end
 end
