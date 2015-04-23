@@ -302,7 +302,11 @@ end
 
 Drinking containers (Tier 1)
 
-For now, augment the nodes from vessels to enable drinking on use.
+Defines a simple wooden bowl which can be used on water to fill
+your hydration.
+
+Optionally also augments the nodes from vessels to enable drinking
+on use.
 
 ]]
 
@@ -332,12 +336,59 @@ function thirsty.on_use_drinking_container( old_on_use )
     end
 end
 
-function thirsty.on_use_canteen( capacity )
-    --[[ Use wear level / tool durability to show hydro content level
-         - a wear of 0     shows no durability bar -> empty
-         - a wear of 1     shows a full durability bar -> full
-         - a wear of 65535 shows an empty durability bar -> empty
-    ]]
+function thirsty.augment_node_for_drinking( nodename )
+    local new_definition = {}
+    -- we need to be able to point at the water
+    new_definition.liquids_pointable = true
+    -- call closure generator with original on_use handler
+    new_definition.on_use = thirsty.on_use_drinking_container(
+        minetest.registered_nodes[nodename].on_use
+    )
+    -- overwrite the node definition with almost the original
+    minetest.override_item(nodename, new_definition)
+end
+
+if (minetest.get_modpath("vessels")) then
+    -- add "drinking" to vessels
+    thirsty.augment_node_for_drinking('vessels:drinking_glass')
+    thirsty.augment_node_for_drinking('vessels:glass_bottle')
+    thirsty.augment_node_for_drinking('vessels:steel_bottle')
+end
+
+-- our own simple wooden bowl
+minetest.register_craftitem('thirsty:wooden_bowl', {
+    description = "Wooden bowl",
+    inventory_image = "thirsty_bowl_16.png",
+    liquids_pointable = true,
+    on_use = thirsty.on_use_drinking_container(nil),
+})
+
+minetest.register_craft({
+    output = "thirsty:wooden_bowl",
+    recipe = {
+        {"group:wood", "", "group:wood"},
+        {"", "group:wood", ""}
+    }
+})
+
+--[[
+
+Hydro containers (Tier 2)
+
+Defines canteens (currently two types, with different capacities),
+tools which store hydro. They use wear to show their content
+level in their durability bar; they do not disappear when used up.
+
+Wear corresponds to hydro level as follows:
+- a wear of 0     shows no durability bar       -> empty (initial state)
+- a wear of 1     shows a full durability bar   -> full
+- a wear of 65535 shows an empty durability bar -> empty
+
+]]
+
+
+-- Closure to use different capacities
+function thirsty.on_use_hydro_container( capacity )
     return function (itemstack, user, pointed_thing)
         local point_at_drink = false
         if pointed_thing and pointed_thing.type == 'node' then
@@ -378,47 +429,12 @@ function thirsty.on_use_canteen( capacity )
     end
 end
 
-function thirsty.augment_node_for_drinking( nodename )
-    local new_definition = {}
-    -- we need to be able to point at the water
-    new_definition.liquids_pointable = true
-    -- call closure generator with original on_use handler
-    new_definition.on_use = thirsty.on_use_drinking_container(
-        minetest.registered_nodes[nodename].on_use
-    )
-    -- overwrite the node definition with almost the original
-    minetest.override_item(nodename, new_definition)
-end
-
-if (minetest.get_modpath("vessels")) then
-    -- add "drinking" to vessels
-    thirsty.augment_node_for_drinking('vessels:drinking_glass')
-    thirsty.augment_node_for_drinking('vessels:glass_bottle')
-    thirsty.augment_node_for_drinking('vessels:steel_bottle')
-end
-
--- our own simple wooden bowl
-minetest.register_craftitem('thirsty:wooden_bowl', {
-    description = "Wooden bowl",
-    inventory_image = "thirsty_bowl_16.png",
-    liquids_pointable = true,
-    on_use = thirsty.on_use_drinking_container(nil),
-})
-
-minetest.register_craft({
-    output = "thirsty:wooden_bowl",
-    recipe = {
-        {"group:wood", "", "group:wood"},
-        {"", "group:wood", ""}
-    }
-})
-
 minetest.register_tool('thirsty:steel_canteen', {
     description = 'Steel canteen',
     inventory_image = "thirsty_steel_canteen_16.png",
     liquids_pointable = true,
     stack_max = 1,
-    on_use = thirsty.on_use_canteen(40),
+    on_use = thirsty.on_use_hydro_container(40),
 })
 
 minetest.register_tool('thirsty:bronze_canteen', {
@@ -426,7 +442,7 @@ minetest.register_tool('thirsty:bronze_canteen', {
     inventory_image = "thirsty_bronze_canteen_16.png",
     liquids_pointable = true,
     stack_max = 1,
-    on_use = thirsty.on_use_canteen(60),
+    on_use = thirsty.on_use_hydro_container(60),
 })
 
 minetest.register_craft({
