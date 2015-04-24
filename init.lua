@@ -459,8 +459,8 @@ minetest.register_craft({
     output = "thirsty:bronze_canteen",
     recipe = {
         { "group:wood", ""},
-        { "default:bronze_ingot", "default:steel_ingot"},
-        { "default:bronze_ingot", "default:steel_ingot"}
+        { "default:bronze_ingot", "default:bronze_ingot"},
+        { "default:bronze_ingot", "default:bronze_ingot"}
     }
 })
 
