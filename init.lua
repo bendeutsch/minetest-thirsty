@@ -105,16 +105,18 @@ if minetest.get_modpath("hudbars") then
         hb.change_hudbar(player, 'thirst', thirsty.hud_clamp(value), 20)
     end
 elseif minetest.get_modpath("hud") then
-    -- API.txt
+    -- default positions follow [hud] defaults
+    local position = HUD_THIRST_POS or { x=0.5, y=1 }
+    local offset   = HUD_THIRST_OFFSET or { x=15, y=-133} -- above AIR
     hud.register('thirst', {
         hud_elem_type = "statbar",
-        position = { x=0.5, y=1 },
+        position = position,
         text = "thirsty_cup_100_24.png",
         background = "thirsty_cup_0_24.png",
         number = 20,
         max = 20,
-        size = { x=24, y=24 },
-        offset = { x=25, y=-(48+24+16+32)},
+        size = HUD_SD_SIZE, -- by default { x=24, y=24 },
+        offset = offset,
     })
     function thirsty.hud_init(player)
         -- automatic by [hud]
