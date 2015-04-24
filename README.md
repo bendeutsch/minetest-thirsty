@@ -3,7 +3,7 @@ Thirsty [thirsty]
 
 A Minetest mod that adds a "thirst" mechanic.
 
-Version: 0.4.0
+Version: 0.5.0
 
 License:
   Code: LGPL 2.1 (see included LICENSE file)
@@ -42,14 +42,14 @@ Current behavior
 You may not move during drinking (or you could cross an ocean without
 getting thirsty).
 
-**Tier 1**: use a cup (e.g. from `vessels`) on water to instantly fill
-your hydration.
+**Tier 1**: use a container (e.g. from `vessels`) on water to instantly
+fill your hydration. Craftable wooden bowl included.
+
+**Tier 2**: craftable canteens: steel canteen holds two full hydration
+bars, bronze canteen three bars worth of water.
 
 Future plans
 ------------
-
-**Tier 2**: craftable water skin: holds three full hydration bars worth
-of water.
 
 **Tier 3**: placeable drinking fountain / wash basin node: instantly
 fills your hydration when used.
