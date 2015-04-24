@@ -63,6 +63,7 @@ once and for all.
 
 Dependencies
 ------------
+* default
 * hud (optional): https://forum.minetest.net/viewtopic.php?f=11&t=6342
 * hudbars (optional): https://forum.minetest.net/viewtopic.php?f=11&t=11153
 * vessels (optional): https://forum.minetest.net/viewtopic.php?id=2574
