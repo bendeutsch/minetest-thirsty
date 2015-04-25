@@ -412,7 +412,7 @@ function thirsty.on_use_hydro_container( capacity )
         elseif itemstack:get_wear() ~= 0 then
             -- drinking from it
             local hydro_missing = 20 - pl.hydro;
-            if hydro_missing > 0 then 
+            if hydro_missing > 0 then
                 local wear_missing = hydro_missing / capacity * 65535.0;
                 local wear         = itemstack:get_wear()
                 local new_wear     = math.ceil(math.max(wear + wear_missing, 1))
@@ -464,6 +464,47 @@ minetest.register_craft({
     }
 })
 
+--[[
+
+Tier 3
+
+]]
+
+minetest.register_node('thirsty:drinking_fountain', {
+    description = 'Drinking fountain',
+    drawtype = 'nodebox',
+    tiles = {
+        -- top, bottom, right, left, front, back
+        'thirsty_drinkfount_top.png',
+        'thirsty_drinkfount_bottom.png',
+        'thirsty_drinkfount_side.png',
+        'thirsty_drinkfount_side.png',
+        'thirsty_drinkfount_side.png',
+        'thirsty_drinkfount_side.png',
+    },
+    paramtype = 'light',
+	groups = {cracky=3},
+    node_box = {
+        type = "fixed",
+        fixed = {
+            { -3/16, -8/16, -3/16, 3/16, 3/16, 3/16 },
+            { -8/16, 3/16, -8/16, 8/16, 6/16, 8/16 },
+            { -8/16, 6/16, -8/16, 8/16, 8/16, -6/16 },
+            { -8/16, 6/16, 6/16, 8/16, 8/16, 8/16 },
+            { -8/16, 6/16, -6/16, -6/16, 8/16, 6/16 },
+            { 6/16, 6/16, -6/16, 8/16, 8/16, 6/16 },
+        },
+    },
+    selection_box = {
+        type = "regular",
+    },
+    collision_box = {
+        type = "regular",
+    },
+    on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+        -- TODO: drink ;-)
+    end
+})
 
 -- read on startup
 thirsty.read_stash()
