@@ -470,6 +470,26 @@ Tier 3
 
 ]]
 
+-- closure to capture old handler
+function thirsty.on_rightclick_drinking_fountain( level, old_on_rightclick )
+    return function (pos, node, player, itemstack, pointed_thing)
+        -- how much to test? If we get this far, it's a fountain ;-)
+        local pl = thirsty.players[player:get_player_name()]
+        -- drink until we're more than full
+        -- Note: if hydro is > level, don't lower it!
+        if pl.hydro < level then
+            pl.hydro = level
+            thirsty.hud_update(player, pl.hydro)
+        end
+        -- call original on_use
+        if old_on_rightclick ~= nil then
+            return old_on_rightclick(pos, node, player, itemstack, pointed_thing)
+        else
+            -- we're done, no item need be removed
+            return nil
+        end
+    end
+end
 minetest.register_node('thirsty:drinking_fountain', {
     description = 'Drinking fountain',
     drawtype = 'nodebox',
@@ -501,9 +521,7 @@ minetest.register_node('thirsty:drinking_fountain', {
     collision_box = {
         type = "regular",
     },
-    on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-        -- TODO: drink ;-)
-    end
+    on_rightclick = thirsty.on_rightclick_drinking_fountain(30, nil),
 })
 
 -- read on startup
