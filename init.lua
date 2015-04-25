@@ -524,6 +524,15 @@ minetest.register_node('thirsty:drinking_fountain', {
     on_rightclick = thirsty.on_rightclick_drinking_fountain(30, nil),
 })
 
+minetest.register_craft({
+    output = "thirsty:drinking_fountain",
+    recipe = {
+        { "default:stone", "bucket:bucket_water", "default:stone"},
+        { "", "default:stone", ""},
+        { "", "default:stone", ""}
+    }
+})
+
 -- read on startup
 thirsty.read_stash()
 -- write on shutdown
