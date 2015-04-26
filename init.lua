@@ -45,10 +45,35 @@ thirsty = {
     stand_still_for_drink = 1.0,
     stand_still_for_afk = 120.0, -- 2 Minutes
 
-    drink_from_node = {
+    -- which nodes can we drink from (given containers)
+    node_drinkable = {
+        ['default:water_source'] = true,
+        ['default:water_flowing'] = true,
+        ['thirsty:drinking_fountain'] = true,
+    },
+
+    regen_from_node = {
         -- value: hydration regen per second
         ['default:water_source'] = 0.5,
         ['default:water_flowing'] = 0.5,
+    },
+
+    drink_from_container = {
+        -- value: max hydration when drinking with item
+        ['thirsty:wooden_bowl'] = 25,
+        ['thirsty:steel_canteen'] = 25,
+        ['thirsty:bronze_canteen'] = 25,
+    },
+
+    container_capacity = {
+        -- value: hydro capacity in item
+        ['thirsty:steel_canteen'] = 40,
+        ['thirsty:bronze_canteen'] = 60,
+    },
+
+    drink_from_node = {
+        -- value: max hydration when drinking from node
+        ['thirsty:drinking_fountain'] = 30,
     },
 
     -- the players' values
@@ -210,7 +235,7 @@ minetest.register_globalstep(function(dtime)
 
             pos.y = pos.y + 0.1
             local node = minetest.get_node(pos)
-            local drink_per_second = thirsty.drink_from_node[node.name]
+            local drink_per_second = thirsty.regen_from_node[node.name]
             if drink_per_second ~= nil and drink_per_second > 0 and pl_standing then
                 pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
                 -- Drinking from the ground won't give you more than max
@@ -302,6 +327,106 @@ end
 
 --[[
 
+General handler
+
+Most tools, nodes and craftitems use the same code, so here it is:
+
+]]
+
+function thirsty.drink_handler(player, itemstack, node)
+    local pl = thirsty.players[player:get_player_name()]
+    local old_hydro = pl.hydro
+
+    -- selectors, always true, to make the following code easier
+    local item_name = itemstack and itemstack:get_name() or ':'
+    local node_name = node      and node.name            or ':'
+
+    if thirsty.node_drinkable[node_name] then
+        -- we found something to drink!
+        local cont_level = thirsty.drink_from_container[item_name] or 0
+        local node_level = thirsty.drink_from_node[node_name] or 0
+        -- drink until level
+        local level = math.max(cont_level, node_level)
+        --print("Drinking to level " .. level)
+        if pl.hydro < level then
+            pl.hydro = level
+        end
+
+        -- fill container, if applicable
+        if thirsty.container_capacity[item_name] then
+            --print("Filling a " .. item_name .. " to " .. thirsty.container_capacity[item_name])
+            itemstack:set_wear(1) -- "looks full"
+        end
+
+    elseif thirsty.container_capacity[item_name] then
+        -- drinking from a container
+        if itemstack:get_wear() ~= 0 then
+            local capacity = thirsty.container_capacity[item_name]
+            local hydro_missing = 20 - pl.hydro;
+            if hydro_missing > 0 then
+                local wear_missing = hydro_missing / capacity * 65535.0;
+                local wear         = itemstack:get_wear()
+                local new_wear     = math.ceil(math.max(wear + wear_missing, 1))
+                if (new_wear > 65534) then
+                    wear_missing = 65534 - wear
+                    new_wear = 65534
+                end
+                itemstack:set_wear(new_wear)
+                if wear_missing > 0 then -- rounding glitches?
+                    pl.hydro = pl.hydro + (wear_missing * capacity / 65535.0)
+                end
+            end
+        end
+    end
+
+    -- update HUD if value changed
+    if pl.hydro ~= old_hydro then
+        thirsty.hud_update(player, pl.hydro)
+    end
+end
+
+--[[
+
+Adapters for drink_handler to on_use and on_rightclick slots.
+These close over the next handler to call in a chain, if desired.
+
+]]
+
+function thirsty.on_use( old_on_use )
+    return function(itemstack, player, pointed_thing)
+        local node = nil
+        if pointed_thing and pointed_thing.type == 'node' then
+            node = minetest.get_node(pointed_thing.under)
+        end
+
+        thirsty.drink_handler(player, itemstack, node)
+
+        -- call original on_use, if provided
+        if old_on_use ~= nil then
+            return old_on_use(itemstack, player, pointed_thing)
+        else
+            return itemstack
+        end
+    end
+end
+
+function thirsty.on_rightclick( old_on_rightclick )
+    return function(pos, node, player, itemstack, pointed_thing)
+
+        thirsty.drink_handler(player, itemstack, node)
+
+        -- call original on_rightclick, if provided
+        if old_on_rightclick ~= nil then
+            return old_on_rightclick(pos, node, player, itemstack, pointed_thing)
+        else
+            return itemstack
+        end
+    end
+end
+
+
+--[[
+
 Drinking containers (Tier 1)
 
 Defines a simple wooden bowl which can be used on water to fill
@@ -312,49 +437,26 @@ on use.
 
 ]]
 
--- closure to capture old on_use handler
-function thirsty.on_use_drinking_container( old_on_use )
-    return function (itemstack, user, pointed_thing)
-        if pointed_thing and pointed_thing.type == 'node' then
-            local node = minetest.get_node(pointed_thing.under)
-            if thirsty.drink_from_node[node.name] ~= nil then
-                -- we found something to drink!
-                local pl = thirsty.players[user:get_player_name()]
-                -- drink until we're more than full
-                -- Note: if hydro is > 25, don't lower it!
-                if pl.hydro < 25 then
-                    pl.hydro = 25
-                    thirsty.hud_update(user, pl.hydro)
-                end
-            end
-        end
-        -- call original on_use
-        if old_on_use ~= nil then
-            return old_on_use(itemstack, user, pointed_thing)
-        else
-            -- we're done, no item need be removed
-            return nil
-        end
-    end
-end
-
-function thirsty.augment_node_for_drinking( nodename )
+function thirsty.augment_node_for_drinking( nodename, level )
     local new_definition = {}
     -- we need to be able to point at the water
     new_definition.liquids_pointable = true
     -- call closure generator with original on_use handler
-    new_definition.on_use = thirsty.on_use_drinking_container(
+    new_definition.on_use = thirsty.on_use(
         minetest.registered_nodes[nodename].on_use
     )
     -- overwrite the node definition with almost the original
     minetest.override_item(nodename, new_definition)
+
+    -- add configuration settings
+    thirsty.drink_from_container[nodename] = level
 end
 
 if (minetest.get_modpath("vessels")) then
     -- add "drinking" to vessels
-    thirsty.augment_node_for_drinking('vessels:drinking_glass')
-    thirsty.augment_node_for_drinking('vessels:glass_bottle')
-    thirsty.augment_node_for_drinking('vessels:steel_bottle')
+    thirsty.augment_node_for_drinking('vessels:drinking_glass', 22)
+    thirsty.augment_node_for_drinking('vessels:glass_bottle', 24)
+    thirsty.augment_node_for_drinking('vessels:steel_bottle', 26)
 end
 
 -- our own simple wooden bowl
@@ -362,7 +464,7 @@ minetest.register_craftitem('thirsty:wooden_bowl', {
     description = "Wooden bowl",
     inventory_image = "thirsty_bowl_16.png",
     liquids_pointable = true,
-    on_use = thirsty.on_use_drinking_container(nil),
+    on_use = thirsty.on_use(nil),
 })
 
 minetest.register_craft({
@@ -388,55 +490,12 @@ Wear corresponds to hydro level as follows:
 
 ]]
 
-
--- Closure to use different capacities
-function thirsty.on_use_hydro_container( capacity )
-    return function (itemstack, user, pointed_thing)
-        local point_at_drink = false
-        if pointed_thing and pointed_thing.type == 'node' then
-            local node = minetest.get_node(pointed_thing.under)
-            if node and thirsty.drink_from_node[node.name] ~= nil then
-                point_at_drink = true
-            end
-        end
-        local name = user:get_player_name()
-        local pl = thirsty.players[name]
-        if point_at_drink then
-            -- fill it
-            itemstack:set_wear(1) -- "looks full"
-            -- drink as from a cup at the same time
-            if pl.hydro < 25 then
-                pl.hydro = 25
-                thirsty.hud_update(user, pl.hydro)
-            end
-        elseif itemstack:get_wear() ~= 0 then
-            -- drinking from it
-            local hydro_missing = 20 - pl.hydro;
-            if hydro_missing > 0 then
-                local wear_missing = hydro_missing / capacity * 65535.0;
-                local wear         = itemstack:get_wear()
-                local new_wear     = math.ceil(math.max(wear + wear_missing, 1))
-                if (new_wear > 65534) then
-                    wear_missing = 65534 - wear
-                    new_wear = 65534
-                end
-                itemstack:set_wear(new_wear)
-                if wear_missing > 0 then -- rounding glitches?
-                    pl.hydro = pl.hydro + (wear_missing * capacity / 65535.0)
-                    thirsty.hud_update(user, pl.hydro)
-                end
-            end
-        end
-        return itemstack
-    end
-end
-
 minetest.register_tool('thirsty:steel_canteen', {
     description = 'Steel canteen',
     inventory_image = "thirsty_steel_canteen_16.png",
     liquids_pointable = true,
     stack_max = 1,
-    on_use = thirsty.on_use_hydro_container(40),
+    on_use = thirsty.on_use(nil),
 })
 
 minetest.register_tool('thirsty:bronze_canteen', {
@@ -444,7 +503,7 @@ minetest.register_tool('thirsty:bronze_canteen', {
     inventory_image = "thirsty_bronze_canteen_16.png",
     liquids_pointable = true,
     stack_max = 1,
-    on_use = thirsty.on_use_hydro_container(60),
+    on_use = thirsty.on_use(nil),
 })
 
 minetest.register_craft({
@@ -470,26 +529,6 @@ Tier 3
 
 ]]
 
--- closure to capture old handler
-function thirsty.on_rightclick_drinking_fountain( level, old_on_rightclick )
-    return function (pos, node, player, itemstack, pointed_thing)
-        -- how much to test? If we get this far, it's a fountain ;-)
-        local pl = thirsty.players[player:get_player_name()]
-        -- drink until we're more than full
-        -- Note: if hydro is > level, don't lower it!
-        if pl.hydro < level then
-            pl.hydro = level
-            thirsty.hud_update(player, pl.hydro)
-        end
-        -- call original on_use
-        if old_on_rightclick ~= nil then
-            return old_on_rightclick(pos, node, player, itemstack, pointed_thing)
-        else
-            -- we're done, no item need be removed
-            return nil
-        end
-    end
-end
 minetest.register_node('thirsty:drinking_fountain', {
     description = 'Drinking fountain',
     drawtype = 'nodebox',
@@ -521,7 +560,7 @@ minetest.register_node('thirsty:drinking_fountain', {
     collision_box = {
         type = "regular",
     },
-    on_rightclick = thirsty.on_rightclick_drinking_fountain(30, nil),
+    on_rightclick = thirsty.on_rightclick(nil),
 })
 
 minetest.register_craft({
