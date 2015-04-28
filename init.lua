@@ -85,7 +85,18 @@ thirsty = {
             time_in_pos = 0.0,
             pending_dmg = 0.0,
         }
-        --]]
+        ]]
+    },
+
+    -- water fountains
+    fountains = {
+        --[[
+        x:y:z = {
+            pos = { x=x, y=y, z=z },
+            level = 4,
+            -- something about times
+        }
+        ]]
     },
 
     stash_filename = 'thirsty.dat',
@@ -235,8 +246,25 @@ minetest.register_globalstep(function(dtime)
 
             pos.y = pos.y + 0.1
             local node = minetest.get_node(pos)
-            local drink_per_second = thirsty.regen_from_node[node.name]
-            if drink_per_second ~= nil and drink_per_second > 0 and pl_standing then
+            local drink_per_second = thirsty.regen_from_node[node.name] or 0
+
+            -- fountaining (uses pos, slight changes ok)
+            for k, fountain in pairs(thirsty.fountains) do
+                local dx = fountain.pos.x - pos.x
+                local dy = fountain.pos.y - pos.y
+                local dz = fountain.pos.z - pos.z
+                local dist2 = dx * dx + dy * dy + dz * dz
+                local fdist = fountain.level * 5 -- max 100 nodes radius
+                --print (string.format("Distance from %s (%d): %f out of %f", k, fountain.level, math.sqrt(dist2), fdist ))
+                if dist2 < fdist * fdist then
+                    -- in range, drink as if standing (still) in water
+                    drink_per_second = math.max(thirsty.regen_from_node['default:water_source'] or 0, drink_per_second)
+                    pl_standing = true
+                    break -- no need to check the other fountains
+                end
+            end
+
+            if drink_per_second > 0 and pl_standing then
                 pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
                 -- Drinking from the ground won't give you more than max
                 if pl.hydro > 20 then pl.hydro = 20 end
@@ -249,6 +277,8 @@ minetest.register_globalstep(function(dtime)
                     --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
                 end
             end
+
+
             -- should we only update the hud on an actual change?
             thirsty.hud_update(player, pl.hydro)
 
@@ -542,7 +572,7 @@ minetest.register_node('thirsty:drinking_fountain', {
         'thirsty_drinkfount_side.png',
     },
     paramtype = 'light',
-	groups = {cracky=3},
+	groups = { cracky = 2 },
     node_box = {
         type = "fixed",
         fixed = {
@@ -570,6 +600,79 @@ minetest.register_craft({
         { "", "default:stone", ""},
         { "", "default:stone", ""}
     }
+})
+
+--[[
+
+Tier 4+: the water fountains, plus extenders
+
+]]
+
+minetest.register_node('thirsty:water_fountain', {
+    description = 'Water fountain',
+    tiles = {
+        -- top, bottom, right, left, front, back
+        'thirsty_waterfountain_top.png',
+        'thirsty_waterfountain_top.png',
+        'thirsty_waterfountain_side.png',
+        'thirsty_waterfountain_side.png',
+        'thirsty_waterfountain_side.png',
+        'thirsty_waterfountain_side.png',
+    },
+    paramtype = 'light',
+    groups = { cracky = 2 },
+})
+
+minetest.register_node('thirsty:water_extender', {
+    description = 'Water fountain extender',
+    tiles = {
+        'thirsty_waterextender_top.png',
+        'thirsty_waterextender_top.png',
+        'thirsty_waterextender_side.png',
+        'thirsty_waterextender_side.png',
+        'thirsty_waterextender_side.png',
+        'thirsty_waterextender_side.png',
+    },
+    paramtype = 'light',
+    groups = { cracky = 2 },
+})
+
+
+minetest.register_abm({
+    nodenames = {'thirsty:water_fountain'},
+    interval = 2,
+    chance = 1,
+    action = function(pos, node)
+        local fountain_count = 0
+        local water_count = 0
+        local total_count = 0
+        for y = 0, 4 do
+            for x = -y, y do
+                for z = -y, y do
+                    local n = minetest.get_node({
+                        x = pos.x + x,
+                        y = pos.y - y + 1, -- start one *above* the fountain
+                        z = pos.z + z
+                    })
+                    if n then
+                        --print(string.format("%s at %d:%d:%d", n.name, pos.x+x, pos.y-y+1, pos.z+z)) 
+                        total_count = total_count + 1
+                        if n.name == 'thirsty:water_fountain' or n.name == 'thirsty:water_extender' then
+                            fountain_count = fountain_count + 1
+                        elseif n.name == 'default:water_source' or n.name == 'default:water_flowing' then
+                            water_count = water_count + 1
+                        end
+                    end
+                end
+            end
+        end
+        --print(string.format("All the counts: %d + %d / %d", fountain_count, water_count, total_count))
+        local level = math.min(20, math.min(fountain_count, water_count))
+        thirsty.fountains[string.format("%d:%d:%d", pos.x, pos.y, pos.z)] = {
+            pos = { x=pos.x, y=pos.y, z=pos.z },
+            level = level,
+        }
+    end
 })
 
 -- read on startup
