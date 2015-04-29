@@ -658,7 +658,7 @@ minetest.register_craft({
 minetest.register_abm({
     nodenames = {'thirsty:water_fountain'},
     interval = 2,
-    chance = 1,
+    chance = 5,
     action = function(pos, node)
         local fountain_count = 0
         local water_count = 0
@@ -683,8 +683,8 @@ minetest.register_abm({
                 end
             end
         end
-        --print(string.format("All the counts: %d + %d / %d", fountain_count, water_count, total_count))
         local level = math.min(20, math.min(fountain_count, water_count))
+        --print(string.format("Fountain (%d): %d + %d / %d", level, fountain_count, water_count, total_count))
         thirsty.fountains[string.format("%d:%d:%d", pos.x, pos.y, pos.z)] = {
             pos = { x=pos.x, y=pos.y, z=pos.z },
             level = level,
