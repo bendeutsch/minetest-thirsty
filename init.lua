@@ -637,6 +637,23 @@ minetest.register_node('thirsty:water_extender', {
     groups = { cracky = 2 },
 })
 
+minetest.register_craft({
+    output = "thirsty:water_fountain",
+    recipe = {
+        { "default:copper_ingot", "bucket:bucket_water", "default:copper_ingot"},
+        { "", "default:copper_ingot", ""},
+        { "default:copper_ingot", "default:mese_crystal", "default:copper_ingot"}
+    }
+})
+minetest.register_craft({
+    output = "thirsty:water_extender",
+    recipe = {
+        { "", "bucket:bucket_water", ""},
+        { "", "default:copper_ingot", ""},
+        { "default:copper_ingot", "default:mese_crystal", "default:copper_ingot"}
+    }
+})
+
 
 minetest.register_abm({
     nodenames = {'thirsty:water_fountain'},
