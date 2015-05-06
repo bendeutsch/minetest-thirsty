@@ -76,6 +76,9 @@ thirsty = {
         ['thirsty:drinking_fountain'] = 30,
     },
 
+    extractor_speed = 0.6,
+    injector_speed = 0.5,
+
     -- the players' values
     players = {
         --[[
@@ -263,6 +266,63 @@ minetest.register_globalstep(function(dtime)
                     break -- no need to check the other fountains
                 end
             end
+
+            -- amulets
+            local extractor_found = false
+            local injector_found = false
+            local container_not_full = nil
+            local container_not_empty = nil
+            local inv_main = player:get_inventory():get_list('main')
+            for i, itemstack in ipairs(inv_main) do
+                local name = itemstack:get_name()
+                if name == 'thirsty:injector' then
+                    injector_found = true
+                end
+                if name == 'thirsty:extractor' then
+                    extractor_found = true
+                end
+                if thirsty.container_capacity[name] then
+                    local wear = itemstack:get_wear()
+                    -- can be both!
+                    if wear == 0 or wear > 1 then
+                        container_not_full = { i, itemstack }
+                    end
+                    if wear > 0 and wear < 65534 then
+                        container_not_empty = { i, itemstack }
+                    end
+                end
+            end
+            if extractor_found and container_not_full then
+                local i = container_not_full[1]
+                local itemstack = container_not_full[2]
+                local capacity = thirsty.container_capacity[itemstack:get_name()]
+                local wear = itemstack:get_wear()
+                if wear == 0 then wear = 65535.0 end
+                local drink = thirsty.extractor_speed * thirsty.tick_time
+                local drinkwear = drink / capacity * 65535.0
+                wear = wear - drinkwear
+                if wear < 1 then wear = 1 end
+                itemstack:set_wear(wear)
+                player:get_inventory():set_stack("main", i, itemstack)
+            end
+            if injector_found and container_not_empty then
+                local i = container_not_empty[1]
+                local itemstack = container_not_empty[2]
+                local capacity = thirsty.container_capacity[itemstack:get_name()]
+                local wear = itemstack:get_wear()
+                if wear == 0 then wear = 65535.0 end
+                local drink = thirsty.injector_speed * thirsty.tick_time
+                local drink_missing = 20 - pl.hydro
+                drink = math.max(math.min(drink, drink_missing), 0)
+                local drinkwear = drink / capacity * 65535.0
+                wear = wear + drinkwear
+                if wear > 65534 then wear = 65534 end
+                itemstack:set_wear(wear)
+                pl.hydro = pl.hydro + drink
+                if pl.hydro > 20 then pl.hydro = 20 end
+                player:get_inventory():set_stack("main", i, itemstack)
+            end
+
 
             if drink_per_second > 0 and pl_standing then
                 pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
@@ -672,7 +732,7 @@ minetest.register_abm({
                         z = pos.z + z
                     })
                     if n then
-                        --print(string.format("%s at %d:%d:%d", n.name, pos.x+x, pos.y-y+1, pos.z+z)) 
+                        --print(string.format("%s at %d:%d:%d", n.name, pos.x+x, pos.y-y+1, pos.z+z))
                         total_count = total_count + 1
                         if n.name == 'thirsty:water_fountain' or n.name == 'thirsty:water_extender' then
                             fountain_count = fountain_count + 1
@@ -690,6 +750,42 @@ minetest.register_abm({
             level = level,
         }
     end
+})
+
+
+--[[
+
+Tier 5
+
+These amulets don't do much; the actual code is above, where
+they are searched for in player's inventories
+
+]]
+
+minetest.register_craftitem('thirsty:injector', {
+    description = 'Water injector',
+    inventory_image = 'thirsty_bowl_16.png',
+})
+minetest.register_craft({
+    output = "thirsty:injector",
+    recipe = {
+        { "default:diamond", "default:mese_crystal", "default:diamond"},
+        { "default:mese_crystal", "bucket:bucket_water", "default:mese_crystal"},
+        { "default:diamond", "default:mese_crystal", "default:diamond"}
+    }
+})
+
+minetest.register_craftitem('thirsty:extractor', {
+    description = 'Water extractor',
+    inventory_image = 'thirsty_bowl_16.png',
+})
+minetest.register_craft({
+    output = "thirsty:extractor",
+    recipe = {
+        { "default:mese_crystal", "default:diamond", "default:mese_crystal"},
+        { "default:diamond", "bucket:bucket_water", "default:diamond"},
+        { "default:mese_crystal", "default:diamond", "default:mese_crystal"}
+    }
 })
 
 -- read on startup
