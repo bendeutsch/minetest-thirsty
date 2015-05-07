@@ -3,7 +3,7 @@ Thirsty [thirsty]
 
 A Minetest mod that adds a "thirst" mechanic.
 
-Version: 0.6.0
+Version: 0.7.0
 
 License:
   Code: LGPL 2.1 (see included LICENSE file)
@@ -54,12 +54,13 @@ fills your hydration when used.
 **Tier 4+**: placeable fountain node(s) to fill the hydration of all
 players within range. Placing more nodes increases the range.
 
-Future plans
-------------
-
 **Tier 5**: craftable trinkets/gadgets/amulets that constantly keep your
 hydration filled when in your inventory, solving your thirst problem
 once and for all.
+
+Future plans
+------------
+Better configurability and an API.
 
 Dependencies
 ------------
