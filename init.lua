@@ -764,7 +764,7 @@ they are searched for in player's inventories
 
 minetest.register_craftitem('thirsty:injector', {
     description = 'Water injector',
-    inventory_image = 'thirsty_bowl_16.png',
+    inventory_image = 'thirsty_injector.png',
 })
 minetest.register_craft({
     output = "thirsty:injector",
@@ -777,7 +777,7 @@ minetest.register_craft({
 
 minetest.register_craftitem('thirsty:extractor', {
     description = 'Water extractor',
-    inventory_image = 'thirsty_bowl_16.png',
+    inventory_image = 'thirsty_extractor.png',
 })
 minetest.register_craft({
     output = "thirsty:extractor",
