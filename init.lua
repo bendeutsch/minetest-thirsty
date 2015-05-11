@@ -268,75 +268,80 @@ minetest.register_globalstep(function(dtime)
             end
 
             -- amulets
-            local extractor_found = false
-            local injector_found = false
-            local container_not_full = nil
-            local container_not_empty = nil
-            local inv_main = player:get_inventory():get_list('main')
-            for i, itemstack in ipairs(inv_main) do
-                local name = itemstack:get_name()
-                if name == 'thirsty:injector' then
-                    injector_found = true
+            -- TODO: I *guess* we need to optimize this, but I haven't
+            --       measured it yet. No premature optimizations!
+            local pl_inv = player:get_inventory()
+            if pl_inv:contains_item('main', 'thirsty:injector') or pl_inv:contains_item('main', 'thirsty:extractor') then
+                local extractor_found = false
+                local injector_found = false
+                local container_not_full = nil
+                local container_not_empty = nil
+                local inv_main = player:get_inventory():get_list('main')
+                for i, itemstack in ipairs(inv_main) do
+                    local name = itemstack:get_name()
+                    if name == 'thirsty:injector' then
+                        injector_found = true
+                    end
+                    if name == 'thirsty:extractor' then
+                        extractor_found = true
+                    end
+                    if thirsty.container_capacity[name] then
+                        local wear = itemstack:get_wear()
+                        -- can be both!
+                        if wear == 0 or wear > 1 then
+                            container_not_full = { i, itemstack }
+                        end
+                        if wear > 0 and wear < 65534 then
+                            container_not_empty = { i, itemstack }
+                        end
+                    end
                 end
-                if name == 'thirsty:extractor' then
-                    extractor_found = true
-                end
-                if thirsty.container_capacity[name] then
+                if extractor_found and container_not_full then
+                    local i = container_not_full[1]
+                    local itemstack = container_not_full[2]
+                    local capacity = thirsty.container_capacity[itemstack:get_name()]
                     local wear = itemstack:get_wear()
-                    -- can be both!
-                    if wear == 0 or wear > 1 then
-                        container_not_full = { i, itemstack }
-                    end
-                    if wear > 0 and wear < 65534 then
-                        container_not_empty = { i, itemstack }
-                    end
+                    if wear == 0 then wear = 65535.0 end
+                    local drink = thirsty.extractor_speed * thirsty.tick_time
+                    local drinkwear = drink / capacity * 65535.0
+                    wear = wear - drinkwear
+                    if wear < 1 then wear = 1 end
+                    itemstack:set_wear(wear)
+                    player:get_inventory():set_stack("main", i, itemstack)
                 end
-            end
-            if extractor_found and container_not_full then
-                local i = container_not_full[1]
-                local itemstack = container_not_full[2]
-                local capacity = thirsty.container_capacity[itemstack:get_name()]
-                local wear = itemstack:get_wear()
-                if wear == 0 then wear = 65535.0 end
-                local drink = thirsty.extractor_speed * thirsty.tick_time
-                local drinkwear = drink / capacity * 65535.0
-                wear = wear - drinkwear
-                if wear < 1 then wear = 1 end
-                itemstack:set_wear(wear)
-                player:get_inventory():set_stack("main", i, itemstack)
-            end
-            if injector_found and container_not_empty then
-                local i = container_not_empty[1]
-                local itemstack = container_not_empty[2]
-                local capacity = thirsty.container_capacity[itemstack:get_name()]
-                local wear = itemstack:get_wear()
-                if wear == 0 then wear = 65535.0 end
-                local drink = thirsty.injector_speed * thirsty.tick_time
-                local drink_missing = 20 - pl.hydro
-                drink = math.max(math.min(drink, drink_missing), 0)
-                local drinkwear = drink / capacity * 65535.0
-                wear = wear + drinkwear
-                if wear > 65534 then wear = 65534 end
-                itemstack:set_wear(wear)
-                pl.hydro = pl.hydro + drink
-                if pl.hydro > 20 then pl.hydro = 20 end
-                player:get_inventory():set_stack("main", i, itemstack)
-            end
+                if injector_found and container_not_empty then
+                    local i = container_not_empty[1]
+                    local itemstack = container_not_empty[2]
+                    local capacity = thirsty.container_capacity[itemstack:get_name()]
+                    local wear = itemstack:get_wear()
+                    if wear == 0 then wear = 65535.0 end
+                    local drink = thirsty.injector_speed * thirsty.tick_time
+                    local drink_missing = 20 - pl.hydro
+                    drink = math.max(math.min(drink, drink_missing), 0)
+                    local drinkwear = drink / capacity * 65535.0
+                    wear = wear + drinkwear
+                    if wear > 65534 then wear = 65534 end
+                    itemstack:set_wear(wear)
+                    pl.hydro = pl.hydro + drink
+                    if pl.hydro > 20 then pl.hydro = 20 end
+                    player:get_inventory():set_stack("main", i, itemstack)
+                end
 
 
-            if drink_per_second > 0 and pl_standing then
-                pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
-                -- Drinking from the ground won't give you more than max
-                if pl.hydro > 20 then pl.hydro = 20 end
-                --print("Raising hydration by "..(drink_per_second*thirsty.tick_time).." to "..pl.hydro)
-            else
-                if not pl_afk then
-                    -- only get thirsty if not AFK
-                    pl.hydro = pl.hydro - thirsty.thirst_per_second * thirsty.tick_time
-                    if pl.hydro < 0 then pl.hydro = 0 end
-                    --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
+                if drink_per_second > 0 and pl_standing then
+                    pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
+                    -- Drinking from the ground won't give you more than max
+                    if pl.hydro > 20 then pl.hydro = 20 end
+                    --print("Raising hydration by "..(drink_per_second*thirsty.tick_time).." to "..pl.hydro)
+                else
+                    if not pl_afk then
+                        -- only get thirsty if not AFK
+                        pl.hydro = pl.hydro - thirsty.thirst_per_second * thirsty.tick_time
+                        if pl.hydro < 0 then pl.hydro = 0 end
+                        --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
+                    end
                 end
-            end
+            end -- if contains_item injector or extractor
 
 
             -- should we only update the hud on an actual change?
