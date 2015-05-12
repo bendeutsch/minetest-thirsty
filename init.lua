@@ -326,22 +326,22 @@ minetest.register_globalstep(function(dtime)
                     if pl.hydro > 20 then pl.hydro = 20 end
                     player:get_inventory():set_stack("main", i, itemstack)
                 end
-
-
-                if drink_per_second > 0 and pl_standing then
-                    pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
-                    -- Drinking from the ground won't give you more than max
-                    if pl.hydro > 20 then pl.hydro = 20 end
-                    --print("Raising hydration by "..(drink_per_second*thirsty.tick_time).." to "..pl.hydro)
-                else
-                    if not pl_afk then
-                        -- only get thirsty if not AFK
-                        pl.hydro = pl.hydro - thirsty.thirst_per_second * thirsty.tick_time
-                        if pl.hydro < 0 then pl.hydro = 0 end
-                        --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
-                    end
-                end
             end -- if contains_item injector or extractor
+
+
+            if drink_per_second > 0 and pl_standing then
+                pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
+                -- Drinking from the ground won't give you more than max
+                if pl.hydro > 20 then pl.hydro = 20 end
+                --print("Raising hydration by "..(drink_per_second*thirsty.tick_time).." to "..pl.hydro)
+            else
+                if not pl_afk then
+                    -- only get thirsty if not AFK
+                    pl.hydro = pl.hydro - thirsty.thirst_per_second * thirsty.tick_time
+                    if pl.hydro < 0 then pl.hydro = 0 end
+                    --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
+                end
+            end
 
 
             -- should we only update the hud on an actual change?
