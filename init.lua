@@ -39,45 +39,53 @@ is still called "thirst", but the visible bar is that of
 thirsty = {
 
     -- Configuration variables
-    tick_time = 0.5,
-    thirst_per_second = 1.0 / 20.0,
-    damage_per_second = 1.0 / 10.0, -- when out of hydration
-    stand_still_for_drink = 1.0,
-    stand_still_for_afk = 120.0, -- 2 Minutes
+    config = {
 
-    -- which nodes can we drink from (given containers)
-    node_drinkable = {
-        ['default:water_source'] = true,
-        ['default:water_flowing'] = true,
-        ['thirsty:drinking_fountain'] = true,
+        stash_filename = 'thirsty.dat',
+
+        tick_time = 0.5,
+
+        -- Tier 0
+        thirst_per_second = 1.0 / 20.0,
+        damage_per_second = 1.0 / 10.0, -- when out of hydration
+        stand_still_for_drink = 1.0,
+        stand_still_for_afk = 120.0, -- 2 Minutes
+
+        -- which nodes can we drink from (given containers)
+        node_drinkable = {
+            ['default:water_source'] = true,
+            ['default:water_flowing'] = true,
+            ['thirsty:drinking_fountain'] = true,
+        },
+
+        regen_from_node = {
+            -- value: hydration regen per second
+            ['default:water_source'] = 0.5,
+            ['default:water_flowing'] = 0.5,
+        },
+
+        drink_from_container = {
+            -- value: max hydration when drinking with item
+            ['thirsty:wooden_bowl'] = 25,
+            ['thirsty:steel_canteen'] = 25,
+            ['thirsty:bronze_canteen'] = 25,
+        },
+
+        container_capacity = {
+            -- value: hydro capacity in item
+            ['thirsty:steel_canteen'] = 40,
+            ['thirsty:bronze_canteen'] = 60,
+        },
+
+        drink_from_node = {
+            -- value: max hydration when drinking from node
+            ['thirsty:drinking_fountain'] = 30,
+        },
+
+        extractor_speed = 0.6,
+        injector_speed = 0.5,
+
     },
-
-    regen_from_node = {
-        -- value: hydration regen per second
-        ['default:water_source'] = 0.5,
-        ['default:water_flowing'] = 0.5,
-    },
-
-    drink_from_container = {
-        -- value: max hydration when drinking with item
-        ['thirsty:wooden_bowl'] = 25,
-        ['thirsty:steel_canteen'] = 25,
-        ['thirsty:bronze_canteen'] = 25,
-    },
-
-    container_capacity = {
-        -- value: hydro capacity in item
-        ['thirsty:steel_canteen'] = 40,
-        ['thirsty:bronze_canteen'] = 60,
-    },
-
-    drink_from_node = {
-        -- value: max hydration when drinking from node
-        ['thirsty:drinking_fountain'] = 30,
-    },
-
-    extractor_speed = 0.6,
-    injector_speed = 0.5,
 
     -- the players' values
     players = {
@@ -102,13 +110,11 @@ thirsty = {
         ]]
     },
 
-    stash_filename = 'thirsty.dat',
-
     -- general settings
     time_next_tick = 0.0,
 }
 
-thirsty.time_next_tick = thirsty.tick_time
+thirsty.time_next_tick = thirsty.config.tick_time
 
 --[[
 
@@ -221,7 +227,7 @@ minetest.register_globalstep(function(dtime)
     thirsty.time_next_tick = thirsty.time_next_tick - dtime
     while thirsty.time_next_tick < 0.0 do
         -- time for thirst
-        thirsty.time_next_tick = thirsty.time_next_tick + thirsty.tick_time
+        thirsty.time_next_tick = thirsty.time_next_tick + thirsty.config.tick_time
         for _,player in ipairs(minetest.get_connected_players()) do
 
             if player:get_hp() <= 0 then
@@ -237,19 +243,19 @@ minetest.register_globalstep(function(dtime)
             -- (the node coordinates in X and Z should be enough)
             local pos_hash = math.floor(pos.x) .. ':' .. math.floor(pos.z)
             if pl.last_pos == pos_hash then
-                pl.time_in_pos = pl.time_in_pos + thirsty.tick_time
+                pl.time_in_pos = pl.time_in_pos + thirsty.config.tick_time
             else
                 -- you moved!
                 pl.last_pos = pos_hash
                 pl.time_in_pos = 0.0
             end
-            local pl_standing = pl.time_in_pos > thirsty.stand_still_for_drink
-            local pl_afk      = pl.time_in_pos > thirsty.stand_still_for_afk
+            local pl_standing = pl.time_in_pos > thirsty.config.stand_still_for_drink
+            local pl_afk      = pl.time_in_pos > thirsty.config.stand_still_for_afk
             --print("Standing: " .. (pl_standing and 'true' or 'false' ) .. ", AFK: " .. (pl_afk and 'true' or 'false'))
 
             pos.y = pos.y + 0.1
             local node = minetest.get_node(pos)
-            local drink_per_second = thirsty.regen_from_node[node.name] or 0
+            local drink_per_second = thirsty.config.regen_from_node[node.name] or 0
 
             -- fountaining (uses pos, slight changes ok)
             for k, fountain in pairs(thirsty.fountains) do
@@ -261,7 +267,7 @@ minetest.register_globalstep(function(dtime)
                 --print (string.format("Distance from %s (%d): %f out of %f", k, fountain.level, math.sqrt(dist2), fdist ))
                 if dist2 < fdist * fdist then
                     -- in range, drink as if standing (still) in water
-                    drink_per_second = math.max(thirsty.regen_from_node['default:water_source'] or 0, drink_per_second)
+                    drink_per_second = math.max(thirsty.config.regen_from_node['default:water_source'] or 0, drink_per_second)
                     pl_standing = true
                     break -- no need to check the other fountains
                 end
@@ -285,7 +291,7 @@ minetest.register_globalstep(function(dtime)
                     if name == 'thirsty:extractor' then
                         extractor_found = true
                     end
-                    if thirsty.container_capacity[name] then
+                    if thirsty.config.container_capacity[name] then
                         local wear = itemstack:get_wear()
                         -- can be both!
                         if wear == 0 or wear > 1 then
@@ -299,10 +305,10 @@ minetest.register_globalstep(function(dtime)
                 if extractor_found and container_not_full then
                     local i = container_not_full[1]
                     local itemstack = container_not_full[2]
-                    local capacity = thirsty.container_capacity[itemstack:get_name()]
+                    local capacity = thirsty.config.container_capacity[itemstack:get_name()]
                     local wear = itemstack:get_wear()
                     if wear == 0 then wear = 65535.0 end
-                    local drink = thirsty.extractor_speed * thirsty.tick_time
+                    local drink = thirsty.config.extractor_speed * thirsty.config.tick_time
                     local drinkwear = drink / capacity * 65535.0
                     wear = wear - drinkwear
                     if wear < 1 then wear = 1 end
@@ -312,10 +318,10 @@ minetest.register_globalstep(function(dtime)
                 if injector_found and container_not_empty then
                     local i = container_not_empty[1]
                     local itemstack = container_not_empty[2]
-                    local capacity = thirsty.container_capacity[itemstack:get_name()]
+                    local capacity = thirsty.config.container_capacity[itemstack:get_name()]
                     local wear = itemstack:get_wear()
                     if wear == 0 then wear = 65535.0 end
-                    local drink = thirsty.injector_speed * thirsty.tick_time
+                    local drink = thirsty.config.injector_speed * thirsty.config.tick_time
                     local drink_missing = 20 - pl.hydro
                     drink = math.max(math.min(drink, drink_missing), 0)
                     local drinkwear = drink / capacity * 65535.0
@@ -330,16 +336,16 @@ minetest.register_globalstep(function(dtime)
 
 
             if drink_per_second > 0 and pl_standing then
-                pl.hydro = pl.hydro + drink_per_second * thirsty.tick_time
+                pl.hydro = pl.hydro + drink_per_second * thirsty.config.tick_time
                 -- Drinking from the ground won't give you more than max
                 if pl.hydro > 20 then pl.hydro = 20 end
-                --print("Raising hydration by "..(drink_per_second*thirsty.tick_time).." to "..pl.hydro)
+                --print("Raising hydration by "..(drink_per_second*thirsty.config.tick_time).." to "..pl.hydro)
             else
                 if not pl_afk then
                     -- only get thirsty if not AFK
-                    pl.hydro = pl.hydro - thirsty.thirst_per_second * thirsty.tick_time
+                    pl.hydro = pl.hydro - thirsty.config.thirst_per_second * thirsty.config.tick_time
                     if pl.hydro < 0 then pl.hydro = 0 end
-                    --print("Lowering hydration by "..(thirsty.thirst_per_second*thirsty.tick_time).." to "..pl.hydro)
+                    --print("Lowering hydration by "..(thirsty.config.thirst_per_second*thirsty.config.tick_time).." to "..pl.hydro)
                 end
             end
 
@@ -352,7 +358,7 @@ minetest.register_globalstep(function(dtime)
                 -- maybe not the best way to do this, but it does mean
                 -- we can do anything with one tick loop
                 if pl.hydro <= 0.0 and not pl_afk then
-                    pl.pending_dmg = pl.pending_dmg + thirsty.damage_per_second * thirsty.tick_time
+                    pl.pending_dmg = pl.pending_dmg + thirsty.config.damage_per_second * thirsty.config.tick_time
                     --print("Pending damage at " .. pl.pending_dmg)
                     if pl.pending_dmg > 1.0 then
                         local dmg = math.floor(pl.pending_dmg)
@@ -377,7 +383,7 @@ If this is missing or corrupted, then no worries: nobody's thirsty ;-)
 ]]
 
 function thirsty.read_stash()
-    local filename = minetest.get_worldpath() .. "/" .. thirsty.stash_filename
+    local filename = minetest.get_worldpath() .. "/" .. thirsty.config.stash_filename
     local file, err = io.open(filename, "r")
     if not file then
         -- no problem, it's just not there
@@ -404,10 +410,10 @@ function thirsty.read_stash()
 end
 
 function thirsty.write_stash()
-    local filename = minetest.get_worldpath() .. "/" .. thirsty.stash_filename
+    local filename = minetest.get_worldpath() .. "/" .. thirsty.config.stash_filename
     local file, err = io.open(filename, "w")
     if not file then
-        minetest.log("error", "Thirsty: could not write " .. thirsty.stash_filename .. ": " ..err)
+        minetest.log("error", "Thirsty: could not write " .. thirsty.config.stash_filename .. ": " ..err)
         return
     end
     file:write('-- Stash file for Minetest mod [thirsty] --\n')
@@ -436,10 +442,10 @@ function thirsty.drink_handler(player, itemstack, node)
     local item_name = itemstack and itemstack:get_name() or ':'
     local node_name = node      and node.name            or ':'
 
-    if thirsty.node_drinkable[node_name] then
+    if thirsty.config.node_drinkable[node_name] then
         -- we found something to drink!
-        local cont_level = thirsty.drink_from_container[item_name] or 0
-        local node_level = thirsty.drink_from_node[node_name] or 0
+        local cont_level = thirsty.config.drink_from_container[item_name] or 0
+        local node_level = thirsty.config.drink_from_node[node_name] or 0
         -- drink until level
         local level = math.max(cont_level, node_level)
         --print("Drinking to level " .. level)
@@ -448,15 +454,15 @@ function thirsty.drink_handler(player, itemstack, node)
         end
 
         -- fill container, if applicable
-        if thirsty.container_capacity[item_name] then
-            --print("Filling a " .. item_name .. " to " .. thirsty.container_capacity[item_name])
+        if thirsty.config.container_capacity[item_name] then
+            --print("Filling a " .. item_name .. " to " .. thirsty.config.container_capacity[item_name])
             itemstack:set_wear(1) -- "looks full"
         end
 
-    elseif thirsty.container_capacity[item_name] then
+    elseif thirsty.config.container_capacity[item_name] then
         -- drinking from a container
         if itemstack:get_wear() ~= 0 then
-            local capacity = thirsty.container_capacity[item_name]
+            local capacity = thirsty.config.container_capacity[item_name]
             local hydro_missing = 20 - pl.hydro;
             if hydro_missing > 0 then
                 local wear_missing = hydro_missing / capacity * 65535.0;
@@ -544,7 +550,7 @@ function thirsty.augment_node_for_drinking( nodename, level )
     minetest.override_item(nodename, new_definition)
 
     -- add configuration settings
-    thirsty.drink_from_container[nodename] = level
+    thirsty.config.drink_from_container[nodename] = level
 end
 
 if (minetest.get_modpath("vessels")) then
