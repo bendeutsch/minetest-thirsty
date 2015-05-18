@@ -105,6 +105,7 @@ thirsty = {
         x:y:z = {
             pos = { x=x, y=y, z=z },
             level = 4,
+            time_until_check = 20,
             -- something about times
         }
         ]]
@@ -370,7 +371,18 @@ minetest.register_globalstep(function(dtime)
                     pl.pending_dmg = 0.0
                 end
             end
+        end -- for players
+
+        -- check fountains for expiration
+        for k, fountain in pairs(thirsty.fountains) do
+            fountain.time_until_check = fountain.time_until_check - thirsty.config.tick_time
+            if fountain.time_until_check <= 0 then
+                -- remove fountain, the abm will set it again
+                --print("Removing fountain at " .. k)
+                thirsty.fountains[k] = nil
+            end
         end
+
     end
 end)
 
@@ -759,6 +771,9 @@ minetest.register_abm({
         thirsty.fountains[string.format("%d:%d:%d", pos.x, pos.y, pos.z)] = {
             pos = { x=pos.x, y=pos.y, z=pos.z },
             level = level,
+            -- time until check is 20 seconds, or twice the average
+            -- time until the abm ticks again. Should be enough.
+            time_until_check = 20,
         }
     end
 })
