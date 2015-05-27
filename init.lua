@@ -40,51 +40,7 @@ thirsty = {
 
     -- Configuration variables
     config = {
-
-        stash_filename = 'thirsty.dat',
-
-        tick_time = 0.5,
-
-        -- Tier 0
-        thirst_per_second = 1.0 / 20.0,
-        damage_per_second = 1.0 / 10.0, -- when out of hydration
-        stand_still_for_drink = 1.0,
-        stand_still_for_afk = 120.0, -- 2 Minutes
-
-        -- which nodes can we drink from (given containers)
-        node_drinkable = {
-            ['default:water_source'] = true,
-            ['default:water_flowing'] = true,
-            ['thirsty:drinking_fountain'] = true,
-        },
-
-        regen_from_node = {
-            -- value: hydration regen per second
-            ['default:water_source'] = 0.5,
-            ['default:water_flowing'] = 0.5,
-        },
-
-        drink_from_container = {
-            -- value: max hydration when drinking with item
-            ['thirsty:wooden_bowl'] = 25,
-            ['thirsty:steel_canteen'] = 25,
-            ['thirsty:bronze_canteen'] = 25,
-        },
-
-        container_capacity = {
-            -- value: hydro capacity in item
-            ['thirsty:steel_canteen'] = 40,
-            ['thirsty:bronze_canteen'] = 60,
-        },
-
-        drink_from_node = {
-            -- value: max hydration when drinking from node
-            ['thirsty:drinking_fountain'] = 30,
-        },
-
-        extractor_speed = 0.6,
-        injector_speed = 0.5,
-
+        -- see configuration.lua
     },
 
     -- the players' values
@@ -115,85 +71,11 @@ thirsty = {
     time_next_tick = 0.0,
 }
 
+dofile(minetest.get_modpath('thirsty')..'/configuration.lua')
+
 thirsty.time_next_tick = thirsty.config.tick_time
 
---[[
-
-HUD definitions
-
-Optionally from one of the supported mods
-
-]]
-
-function thirsty.hud_clamp(value)
-    if value < 0 then
-        return 0
-    elseif value > 20 then
-        return 20
-    else
-        return math.ceil(value)
-    end
-end
-
-if minetest.get_modpath("hudbars") then
-    hb.register_hudbar('thirst', 0xffffff, "Hydration", {
-        bar = 'thirsty_hudbars_bar.png',
-        icon = 'thirsty_cup_100_16.png'
-    }, 20, 20, false)
-    function thirsty.hud_init(player)
-        local name = player:get_player_name()
-        hb.init_hudbar(player, 'thirst',
-            thirsty.hud_clamp(thirsty.players[name].hydro),
-        20, false)
-    end
-    function thirsty.hud_update(player, value)
-        local name = player:get_player_name()
-        hb.change_hudbar(player, 'thirst', thirsty.hud_clamp(value), 20)
-    end
-elseif minetest.get_modpath("hud") then
-    -- default positions follow [hud] defaults
-    local position = HUD_THIRST_POS or { x=0.5, y=1 }
-    local offset   = HUD_THIRST_OFFSET or { x=15, y=-133} -- above AIR
-    hud.register('thirst', {
-        hud_elem_type = "statbar",
-        position = position,
-        text = "thirsty_cup_100_24.png",
-        background = "thirsty_cup_0_24.png",
-        number = 20,
-        max = 20,
-        size = HUD_SD_SIZE, -- by default { x=24, y=24 },
-        offset = offset,
-    })
-    function thirsty.hud_init(player)
-        -- automatic by [hud]
-    end
-    function thirsty.hud_update(player, value)
-        hud.change_item(player, 'thirst', {
-            number = thirsty.hud_clamp(value)
-        })
-    end
-else
-    -- 'builtin' hud
-    function thirsty.hud_init(player)
-        -- above breath bar, for now
-        local name = player:get_player_name()
-        thirsty.players[name].hud_id = player:hud_add({
-            hud_elem_type = "statbar",
-            position = { x=0.5, y=1 },
-            text = "thirsty_cup_100_24.png",
-            number = thirsty.hud_clamp(thirsty.players[name].hydro),
-            direction = 0,
-            size = { x=24, y=24 },
-            offset = { x=25, y=-(48+24+16+32)},
-        })
-    end
-    function thirsty.hud_update(player, value)
-        local name = player:get_player_name()
-        local hud_id = thirsty.players[name].hud_id
-        player:hud_change(hud_id, 'number', thirsty.hud_clamp(value))
-    end
-end
-
+dofile(minetest.get_modpath('thirsty')..'/hud.lua')
 
 minetest.register_on_joinplayer(function(player)
     local name = player:get_player_name()
