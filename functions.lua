@@ -88,62 +88,62 @@ function thirsty.main_loop(dtime)
             -- TODO: I *guess* we need to optimize this, but I haven't
             --       measured it yet. No premature optimizations!
             local pl_inv = player:get_inventory()
-            if pl_inv:contains_item('main', 'thirsty:injector') or pl_inv:contains_item('main', 'thirsty:extractor') then
-                local extractor_found = false
-                local injector_found = false
-                local container_not_full = nil
-                local container_not_empty = nil
-                local inv_main = player:get_inventory():get_list('main')
-                for i, itemstack in ipairs(inv_main) do
-                    local name = itemstack:get_name()
-                    if name == 'thirsty:injector' then
-                        injector_found = true
-                    end
-                    if name == 'thirsty:extractor' then
-                        extractor_found = true
-                    end
-                    if thirsty.config.container_capacity[name] then
-                        local wear = itemstack:get_wear()
-                        -- can be both!
-                        if wear == 0 or wear > 1 then
-                            container_not_full = { i, itemstack }
-                        end
-                        if wear > 0 and wear < 65534 then
-                            container_not_empty = { i, itemstack }
-                        end
-                    end
+            local extractor_max = 0.0
+            local injector_max = 0.0
+            local container_not_full = nil
+            local container_not_empty = nil
+            local inv_main = player:get_inventory():get_list('main')
+            for i, itemstack in ipairs(inv_main) do
+                local name = itemstack:get_name()
+                local injector_this = thirsty.config.injection_for_item[name]
+                if injector_this and injector_this > injector_max then
+                    injector_max = injector_this
                 end
-                if extractor_found and container_not_full then
-                    local i = container_not_full[1]
-                    local itemstack = container_not_full[2]
-                    local capacity = thirsty.config.container_capacity[itemstack:get_name()]
+                local extractor_this = thirsty.config.extraction_for_item[name]
+                if extractor_this and extractor_this > extractor_max then
+                    extractor_max = extractor_this
+                end
+                if thirsty.config.container_capacity[name] then
                     local wear = itemstack:get_wear()
-                    if wear == 0 then wear = 65535.0 end
-                    local drink = thirsty.config.extractor_speed * thirsty.config.tick_time
-                    local drinkwear = drink / capacity * 65535.0
-                    wear = wear - drinkwear
-                    if wear < 1 then wear = 1 end
-                    itemstack:set_wear(wear)
-                    player:get_inventory():set_stack("main", i, itemstack)
+                    -- can be both!
+                    if wear == 0 or wear > 1 then
+                        container_not_full = { i, itemstack }
+                    end
+                    if wear > 0 and wear < 65534 then
+                        container_not_empty = { i, itemstack }
+                    end
                 end
-                if injector_found and container_not_empty then
-                    local i = container_not_empty[1]
-                    local itemstack = container_not_empty[2]
-                    local capacity = thirsty.config.container_capacity[itemstack:get_name()]
-                    local wear = itemstack:get_wear()
-                    if wear == 0 then wear = 65535.0 end
-                    local drink = thirsty.config.injector_speed * thirsty.config.tick_time
-                    local drink_missing = 20 - pl.hydro
-                    drink = math.max(math.min(drink, drink_missing), 0)
-                    local drinkwear = drink / capacity * 65535.0
-                    wear = wear + drinkwear
-                    if wear > 65534 then wear = 65534 end
-                    itemstack:set_wear(wear)
-                    pl.hydro = pl.hydro + drink
-                    if pl.hydro > 20 then pl.hydro = 20 end
-                    player:get_inventory():set_stack("main", i, itemstack)
-                end
-            end -- if contains_item injector or extractor
+            end
+            if extractor_max > 0.0 and container_not_full then
+                local i = container_not_full[1]
+                local itemstack = container_not_full[2]
+                local capacity = thirsty.config.container_capacity[itemstack:get_name()]
+                local wear = itemstack:get_wear()
+                if wear == 0 then wear = 65535.0 end
+                local drink = extractor_max * thirsty.config.tick_time
+                local drinkwear = drink / capacity * 65535.0
+                wear = wear - drinkwear
+                if wear < 1 then wear = 1 end
+                itemstack:set_wear(wear)
+                player:get_inventory():set_stack("main", i, itemstack)
+            end
+            if injector_max > 0.0 and container_not_empty then
+                local i = container_not_empty[1]
+                local itemstack = container_not_empty[2]
+                local capacity = thirsty.config.container_capacity[itemstack:get_name()]
+                local wear = itemstack:get_wear()
+                if wear == 0 then wear = 65535.0 end
+                local drink = injector_max * thirsty.config.tick_time
+                local drink_missing = 20 - pl.hydro
+                drink = math.max(math.min(drink, drink_missing), 0)
+                local drinkwear = drink / capacity * 65535.0
+                wear = wear + drinkwear
+                if wear > 65534 then wear = 65534 end
+                itemstack:set_wear(wear)
+                pl.hydro = pl.hydro + drink
+                if pl.hydro > 20 then pl.hydro = 20 end
+                player:get_inventory():set_stack("main", i, itemstack)
+            end
 
 
             if drink_per_second > 0 and pl_standing then

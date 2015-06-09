@@ -55,8 +55,12 @@ thirsty.config = {
         ['thirsty:drinking_fountain'] = 30,
     },
 
-    extractor_speed = 0.6,
-    injector_speed = 0.5,
+    extraction_for_item = {
+        ['thirsty:extractor']= 0.6,
+    },
+    injection_for_item = {
+        ['thirsty:injector'] = 0.5,
+    },
 
 }
 
