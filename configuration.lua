@@ -24,17 +24,17 @@ thirsty.config = {
     stand_still_for_drink = 1.0,
     stand_still_for_afk = 120.0, -- 2 Minutes
 
+    regen_from_node = {
+        -- value: hydration regen per second
+        ['default:water_source'] = 0.5,
+        ['default:water_flowing'] = 0.5,
+    },
+
     -- which nodes can we drink from (given containers)
     node_drinkable = {
         ['default:water_source'] = true,
         ['default:water_flowing'] = true,
         ['thirsty:drinking_fountain'] = true,
-    },
-
-    regen_from_node = {
-        -- value: hydration regen per second
-        ['default:water_source'] = 0.5,
-        ['default:water_flowing'] = 0.5,
     },
 
     drink_from_container = {
