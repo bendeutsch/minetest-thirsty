@@ -74,11 +74,11 @@ function thirsty.main_loop(dtime)
                 local dy = fountain.pos.y - pos.y
                 local dz = fountain.pos.z - pos.z
                 local dist2 = dx * dx + dy * dy + dz * dz
-                local fdist = fountain.level * 5 -- max 100 nodes radius
+                local fdist = fountain.level * thirsty.config.fountain_distance_per_level -- max 100 nodes radius
                 --print (string.format("Distance from %s (%d): %f out of %f", k, fountain.level, math.sqrt(dist2), fdist ))
                 if dist2 < fdist * fdist then
                     -- in range, drink as if standing (still) in water
-                    drink_per_second = math.max(thirsty.config.regen_from_node['default:water_source'] or 0, drink_per_second)
+                    drink_per_second = math.max(thirsty.config.regen_from_fountain or 0, drink_per_second)
                     pl_standing = true
                     break -- no need to check the other fountains
                 end
@@ -372,7 +372,7 @@ function thirsty.fountain_abm(pos, node)
     local fountain_count = 0
     local water_count = 0
     local total_count = 0
-    for y = 0, 4 do
+    for y = 0, thirsty.config.fountain_height do
         for x = -y, y do
             for z = -y, y do
                 local n = minetest.get_node({
@@ -383,16 +383,17 @@ function thirsty.fountain_abm(pos, node)
                 if n then
                     --print(string.format("%s at %d:%d:%d", n.name, pos.x+x, pos.y-y+1, pos.z+z))
                     total_count = total_count + 1
-                    if n.name == 'thirsty:water_fountain' or n.name == 'thirsty:water_extender' then
+                    local type = thirsty.config.fountain_type[n.name] or ''
+                    if type == 'f' then
                         fountain_count = fountain_count + 1
-                    elseif n.name == 'default:water_source' or n.name == 'default:water_flowing' then
+                    elseif type == 'w' then
                         water_count = water_count + 1
                     end
                 end
             end
         end
     end
-    local level = math.min(20, math.min(fountain_count, water_count))
+    local level = math.min(thirsty.config.fountain_max_level, math.min(fountain_count, water_count))
     --print(string.format("Fountain (%d): %d + %d / %d", level, fountain_count, water_count, total_count))
     thirsty.fountains[string.format("%d:%d:%d", pos.x, pos.y, pos.z)] = {
         pos = { x=pos.x, y=pos.y, z=pos.z },

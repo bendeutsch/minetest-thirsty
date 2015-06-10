@@ -55,6 +55,19 @@ thirsty.config = {
         ['thirsty:drinking_fountain'] = 30,
     },
 
+    -- fountains are marked with 'f', water with 'w'
+    -- to determine the fountain level
+    fountain_type = {
+        ['thirsty:water_fountain'] = 'f',
+        ['thirsty:water_extender'] = 'f',
+        ['default:water_source'] = 'w',
+        ['default:water_flowing'] =  'w',
+    },
+    regen_from_fountain = 0.5, -- compare regen_from_node
+    fountain_height = 4,
+    fountain_max_level = 20,
+    fountain_distance_per_level = 5,
+
     extraction_for_item = {
         ['thirsty:extractor']= 0.6,
     },
