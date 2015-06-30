@@ -77,4 +77,16 @@ thirsty.config = {
 
 }
 
--- TODO: read more configuration from thirsty.conf or similar
+-- read more configuration from thirsty.conf
+
+local filename = minetest.get_modpath('thirsty') .. "/thirsty.conf"
+local file, err = io.open(filename, 'r')
+if file then
+    file:close() -- was just for checking existance
+    local confcode, err = loadfile(filename)
+    if confcode then
+        confcode()
+    else
+        minetest.log("error", "Could not load thirsty.conf: " .. err)
+    end
+end
