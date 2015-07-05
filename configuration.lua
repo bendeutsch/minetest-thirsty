@@ -75,6 +75,13 @@ thirsty.config = {
         ['thirsty:injector'] = 0.5,
     },
 
+    register_vessels = true,
+    register_bowl = true,
+    register_canteens = true,
+    register_drinking_fountain = true,
+    register_fountains = true,
+    register_amulets = true,
+
 }
 
 -- read more configuration from thirsty.conf

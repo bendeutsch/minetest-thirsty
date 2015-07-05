@@ -23,10 +23,10 @@ thirsty.config.thirst_per_second = 1.0 / 20.0
 thirsty.config.damage_per_second = 1.0 / 10.0
 -- How long in seconds you have to remain still to drink from standing
 -- in water
-thirsty.config.stand_still_for_drink = 1.0,
+thirsty.config.stand_still_for_drink = 1.0
 -- How long in seconds of not moving before a player is deemed AFK
 -- (away from keyboard), such players no longer get thirsty or damaged
-thirsty.config.stand_still_for_afk = 120.0, -- 2 Minutes
+thirsty.config.stand_still_for_afk = 120.0 -- 2 Minutes
 
 -- regen_from_node is a table defining, for each node type, the
 -- amount of hydro per second a player drinks by standing in it.
@@ -79,3 +79,25 @@ thirsty.config.fountain_distance_per_level = 5
 thirsty.config.extraction_for_item['thirsty:extractor'] = 0.6
 -- How much hydration does a given item *inject* (fill you up with)
 thirsty.config.injection_for_item['thirsty:injector'] = 0.5
+
+-- Registration of individual components
+-- These flags enable or disable the predefined components included
+-- in this mod. They do *not* enable or disable the functionality.
+
+-- Should we augment the vessels from the "vessels" mod?
+thirsty.config.register_vessels = true
+
+-- Add the wooden bowl and crafting recipe?
+thirsty.config.register_bowl = true
+
+-- Add the canteens and crafting recipes?
+thirsty.config.register_canteens = true
+
+-- Add the drinking fountain and crafting recipes?
+thirsty.config.register_drinking_fountain = true
+
+-- Add the fountain and extenders and crafting recipes?
+thirsty.config.register_fountains = true
+
+-- Add the amulets (extractor / injector) and crafting recipes?
+thirsty.config.register_amulets = true
