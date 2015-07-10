@@ -28,12 +28,16 @@ thirsty.config = {
         -- value: hydration regen per second
         ['default:water_source'] = 0.5,
         ['default:water_flowing'] = 0.5,
+        ['default:river_water_source'] = 0.5,
+        ['default:river_water_flowing'] = 0.5,
     },
 
     -- which nodes can we drink from (given containers)
     node_drinkable = {
         ['default:water_source'] = true,
         ['default:water_flowing'] = true,
+        ['default:river_water_source'] = true,
+        ['default:river_water_flowing'] = true,
         ['thirsty:drinking_fountain'] = true,
     },
 
@@ -62,6 +66,8 @@ thirsty.config = {
         ['thirsty:water_extender'] = 'f',
         ['default:water_source'] = 'w',
         ['default:water_flowing'] =  'w',
+        ['default:river_water_source'] = 'w',
+        ['default:river_water_flowing'] =  'w',
     },
     regen_from_fountain = 0.5, -- compare regen_from_node
     fountain_height = 4,

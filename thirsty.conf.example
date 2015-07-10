@@ -33,11 +33,15 @@ thirsty.config.stand_still_for_afk = 120.0 -- 2 Minutes
 -- Assign 'nil' to stop a player from drinking from this node type.
 thirsty.config.regen_from_node['default:water_source'] = 0.5
 thirsty.config.regen_from_node['default:water_flowing'] = 0.5
+thirsty.config.regen_from_node['default:river_water_source'] = 0.5
+thirsty.config.regen_from_node['default:river_water_flowing'] = 0.5
 
 -- node_drinkable: which nodes can we drink from, given a
 -- container (a cup, a bowl etc.)
 thirsty.config.node_drinkable['default:water_source'] = true
 thirsty.config.node_drinkable['default:water_flowing'] = true
+thirsty.config.node_drinkable['default:river_water_source'] = true
+thirsty.config.node_drinkable['default:river_water_flowing'] = true
 thirsty.config.node_drinkable['thirsty:drinking_fountain'] = true
 
 -- drink_from_container: the hydration you drink to when
@@ -63,6 +67,8 @@ thirsty.config.fountain_type['thirsty:water_fountain'] = 'f'
 thirsty.config.fountain_type['thirsty:water_extender'] = 'f'
 thirsty.config.fountain_type['default:water_source'] = 'w'
 thirsty.config.fountain_type['default:water_flowing'] = 'w'
+thirsty.config.fountain_type['default:river_water_source'] = 'w'
+thirsty.config.fountain_type['default:river_water_flowing'] = 'w'
 
 -- Regeneration from being within a fountain's radius; see also
 -- regen_from_node (it's as if you're standing in water)
