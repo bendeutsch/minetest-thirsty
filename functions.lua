@@ -55,6 +55,12 @@ function thirsty.drink(player, value, max)
     return thirsty._drink(pl, value, max)
 end
 
+function thirsty.get_hydro(player)
+    local name = player:get_player_name()
+    local pl = thirsty.players[name]
+    return pl.hydro
+end
+
 --[[
 
 Main Loop (Tier 0)
