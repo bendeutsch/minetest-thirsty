@@ -38,7 +38,7 @@ function thirsty._drink(pl, value, max)
     -- test whether we're not *above* max;
     -- this function should not remove any overhydration 
     if pl.hydro < max then
-        pl.hydro = math.max(pl.hydro + value, max)
+        pl.hydro = math.min(pl.hydro + value, max)
         --print("Drinking by "..value.." to "..pl.hydro)
         return true
     end
