@@ -58,6 +58,17 @@ players within range. Placing more nodes increases the range.
 hydration filled when in your inventory, solving your thirst problem
 once and for all.
 
+API
+---
+Some functions of interest:
+
+* thirsty.drink(player, amount, [max]) : instantly drink a bit (up to a max value, default 20)
+* thirsty.get_hydro(player) : returns the current hydration of a player
+* thirsty.set_thirst_factor(player, factor) : how fast does the given player get thirsty (default is 1.0)
+* thirsty.get_thirst_factor(player) : returns the current thirst factor of a player
+
+"player" refers to a player object, i.e. with a get_player_name() method.
+
 Future plans
 ------------
 Better configurability and an API.
