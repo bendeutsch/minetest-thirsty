@@ -29,6 +29,34 @@ end
 
 --[[
 
+Getters, setters and such
+
+]]
+
+-- internal version, for speed
+function thirsty._drink(pl, value, max)
+    -- test whether we're not *above* max;
+    -- this function should not remove any overhydration 
+    if pl.hydro < max then
+        pl.hydro = math.max(pl.hydro + value, max)
+        --print("Drinking by "..value.." to "..pl.hydro)
+        return true
+    end
+    return false
+end
+
+function thirsty.drink(player, value, max)
+    -- if max is not specified, assume 20
+    if not max then
+        max = 20
+    end
+    local name = player:get_player_name()
+    local pl = thirsty.players[name]
+    return thirsty._drink(pl, value, max)
+end
+
+--[[
+
 Main Loop (Tier 0)
 
 ]]
@@ -140,16 +168,14 @@ function thirsty.main_loop(dtime)
                 wear = wear + drinkwear
                 if wear > 65534 then wear = 65534 end
                 itemstack:set_wear(wear)
-                pl.hydro = pl.hydro + drink
-                if pl.hydro > 20 then pl.hydro = 20 end
+                thirsty._drink(pl, drink, 20)
                 player:get_inventory():set_stack("main", i, itemstack)
             end
 
 
             if drink_per_second > 0 and pl_standing then
-                pl.hydro = pl.hydro + drink_per_second * thirsty.config.tick_time
                 -- Drinking from the ground won't give you more than max
-                if pl.hydro > 20 then pl.hydro = 20 end
+                thirsty._drink(pl, drink_per_second * thirsty.config.tick_time, 20)
                 --print("Raising hydration by "..(drink_per_second*thirsty.config.tick_time).." to "..pl.hydro)
             else
                 if not pl_afk then
@@ -296,7 +322,7 @@ function thirsty.drink_handler(player, itemstack, node)
                 end
                 itemstack:set_wear(new_wear)
                 if wear_missing > 0 then -- rounding glitches?
-                    pl.hydro = pl.hydro + (wear_missing * capacity / 65535.0)
+                    thirsty._drink(pl, wear_missing * capacity / 65535.0, 20)
                 end
             end
         end
