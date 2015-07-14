@@ -51,6 +51,7 @@ thirsty = {
             last_pos = '-10:3',
             time_in_pos = 0.0,
             pending_dmg = 0.0,
+            thirst_factor = 1.0,
         }
         ]]
     },

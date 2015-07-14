@@ -16,6 +16,7 @@ function thirsty.on_joinplayer(player)
             last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
             time_in_pos = 0.0,
             pending_dmg = 0.0,
+            thirst_factor = 1.0,
         }
     end
     thirsty.hud_init(player)
@@ -23,8 +24,11 @@ end
 
 function thirsty.on_dieplayer(player)
     local name = player:get_player_name()
-    -- fill after death
-    thirsty.players[name].hydro = 20;
+    local pl   = thirsty.players[name]
+    -- reset after death
+    pl.hydro = 20
+    pl.pending_dmg = 0.0
+    pl.thirst_factor = 1.0
 end
 
 --[[
@@ -59,6 +63,18 @@ function thirsty.get_hydro(player)
     local name = player:get_player_name()
     local pl = thirsty.players[name]
     return pl.hydro
+end
+
+function thirsty.set_thirst_factor(player, factor)
+    local name = player:get_player_name()
+    local pl = thirsty.players[name]
+    pl.thirst_factor = factor
+end
+
+function thirsty.get_thirst_factor(player)
+    local name = player:get_player_name()
+    local pl = thirsty.players[name]
+    return pl.thirst_factor
 end
 
 --[[
@@ -186,9 +202,10 @@ function thirsty.main_loop(dtime)
             else
                 if not pl_afk then
                     -- only get thirsty if not AFK
-                    pl.hydro = pl.hydro - thirsty.config.thirst_per_second * thirsty.config.tick_time
+                    local amount = thirsty.config.thirst_per_second * thirsty.config.tick_time * pl.thirst_factor
+                    pl.hydro = pl.hydro - amount
                     if pl.hydro < 0 then pl.hydro = 0 end
-                    --print("Lowering hydration by "..(thirsty.config.thirst_per_second*thirsty.config.tick_time).." to "..pl.hydro)
+                    --print("Lowering hydration by "..amount.." to "..pl.hydro)
                 end
             end
 
