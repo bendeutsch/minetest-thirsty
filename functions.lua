@@ -274,6 +274,7 @@ function thirsty.read_stash()
                 last_pos = '0:0', -- not true, but no matter
                 time_in_pos = 0.0,
                 pending_dmg = tonumber(dmg),
+                thirst_factor = 1.0,
             }
         end
     end
