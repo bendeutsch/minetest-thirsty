@@ -47,7 +47,6 @@ thirsty = {
     players = {
         --[[
         name = {
-            hydro = 20,
             last_pos = '-10:3',
             time_in_pos = 0.0,
             pending_dmg = 0.0,
@@ -72,6 +71,8 @@ thirsty = {
     time_next_tick = 0.0,
 }
 
+dofile(minetest.get_modpath('thirsty')..'/persistent_player_attributes.lua')
+
 dofile(minetest.get_modpath('thirsty')..'/configuration.lua')
 
 thirsty.time_next_tick = thirsty.config.tick_time
@@ -86,8 +87,8 @@ minetest.register_globalstep(thirsty.main_loop)
 dofile(minetest.get_modpath('thirsty')..'/components.lua')
 
 -- read on startup
-thirsty.read_stash()
+--thirsty.read_stash()
 -- write on shutdown
-minetest.register_on_shutdown(thirsty.write_stash)
+--minetest.register_on_shutdown(thirsty.write_stash)
 
 

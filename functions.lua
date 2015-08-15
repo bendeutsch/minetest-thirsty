@@ -6,13 +6,21 @@ See init.lua for license.
 
 ]]
 
+local PPA = persistent_player_attributes
+
+PPA.register({
+    name = 'thirsty_hydro',
+    min = 0,
+    max = 50,
+    default = 20,
+})
+
 function thirsty.on_joinplayer(player)
     local name = player:get_player_name()
     -- default entry for new players
     if not thirsty.players[name] then
         local pos = player:getpos()
         thirsty.players[name] = {
-            hydro = 20,
             last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
             time_in_pos = 0.0,
             pending_dmg = 0.0,
@@ -26,7 +34,7 @@ function thirsty.on_dieplayer(player)
     local name = player:get_player_name()
     local pl   = thirsty.players[name]
     -- reset after death
-    pl.hydro = 20
+    PPA.set_value(player, 'thirsty_hydro', 20)
     pl.pending_dmg = 0.0
     pl.thirst_factor = 1.0
 end
@@ -37,32 +45,25 @@ Getters, setters and such
 
 ]]
 
--- internal version, for speed
-function thirsty._drink(pl, value, max)
-    -- test whether we're not *above* max;
-    -- this function should not remove any overhydration 
-    if pl.hydro < max then
-        pl.hydro = math.min(pl.hydro + value, max)
-        --print("Drinking by "..value.." to "..pl.hydro)
-        return true
-    end
-    return false
-end
-
 function thirsty.drink(player, value, max)
     -- if max is not specified, assume 20
     if not max then
         max = 20
     end
-    local name = player:get_player_name()
-    local pl = thirsty.players[name]
-    return thirsty._drink(pl, value, max)
+    local hydro = PPA.get_value(player, 'thirsty_hydro')
+    -- test whether we're not *above* max;
+    -- this function should not remove any overhydration
+    if hydro < max then
+        hydro = math.min(hydro + value, max)
+        --print("Drinking by "..value.." to "..hydro)
+        PPA.set_value(player, 'thirsty_hydro', hydro)
+        return true
+    end
+    return false
 end
 
 function thirsty.get_hydro(player)
-    local name = player:get_player_name()
-    local pl = thirsty.players[name]
-    return pl.hydro
+    return PPA.get_value(player, 'thirsty_hydro')
 end
 
 function thirsty.set_thirst_factor(player, factor)
@@ -99,6 +100,7 @@ function thirsty.main_loop(dtime)
             local name = player:get_player_name()
             local pos  = player:getpos()
             local pl = thirsty.players[name]
+            local hydro = PPA.get_value(player, 'thirsty_hydro')
 
             -- how long have we been standing "here"?
             -- (the node coordinates in X and Z should be enough)
@@ -184,40 +186,41 @@ function thirsty.main_loop(dtime)
                 local wear = itemstack:get_wear()
                 if wear == 0 then wear = 65535.0 end
                 local drink = injector_max * thirsty.config.tick_time
-                local drink_missing = 20 - pl.hydro
+                local drink_missing = 20 - hydro
                 drink = math.max(math.min(drink, drink_missing), 0)
                 local drinkwear = drink / capacity * 65535.0
                 wear = wear + drinkwear
                 if wear > 65534 then wear = 65534 end
                 itemstack:set_wear(wear)
-                thirsty._drink(pl, drink, 20)
+                thirsty.drink(player, drink, 20)
+                hydro = PPA.get_value(player, 'thirsty_hydro')
                 player:get_inventory():set_stack("main", i, itemstack)
             end
 
 
             if drink_per_second > 0 and pl_standing then
                 -- Drinking from the ground won't give you more than max
-                thirsty._drink(pl, drink_per_second * thirsty.config.tick_time, 20)
-                --print("Raising hydration by "..(drink_per_second*thirsty.config.tick_time).." to "..pl.hydro)
+                thirsty.drink(player, drink_per_second * thirsty.config.tick_time, 20)
+                --print("Raising hydration by "..(drink_per_second*thirsty.config.tick_time).." to "..PPA.get_value(player, 'thirsty_hydro'))
             else
                 if not pl_afk then
                     -- only get thirsty if not AFK
                     local amount = thirsty.config.thirst_per_second * thirsty.config.tick_time * pl.thirst_factor
-                    pl.hydro = pl.hydro - amount
-                    if pl.hydro < 0 then pl.hydro = 0 end
-                    --print("Lowering hydration by "..amount.." to "..pl.hydro)
+                    PPA.set_value(player, 'thirsty_hydro', hydro - amount)
+                    hydro = PPA.get_value(player, 'thirsty_hydro')
+                    --print("Lowering hydration by "..amount.." to "..hydro)
                 end
             end
 
 
             -- should we only update the hud on an actual change?
-            thirsty.hud_update(player, pl.hydro)
+            thirsty.hud_update(player, hydro)
 
             -- damage, if enabled
             if minetest.setting_getbool("enable_damage") then
                 -- maybe not the best way to do this, but it does mean
                 -- we can do anything with one tick loop
-                if pl.hydro <= 0.0 and not pl_afk then
+                if hydro <= 0.0 and not pl_afk then
                     pl.pending_dmg = pl.pending_dmg + thirsty.config.damage_per_second * thirsty.config.tick_time
                     --print("Pending damage at " .. pl.pending_dmg)
                     if pl.pending_dmg > 1.0 then
@@ -247,59 +250,6 @@ end
 
 --[[
 
-Stash: persist the hydration values in a file in the world directory.
-
-If this is missing or corrupted, then no worries: nobody's thirsty ;-)
-
-]]
-
-function thirsty.read_stash()
-    local filename = minetest.get_worldpath() .. "/" .. thirsty.config.stash_filename
-    local file, err = io.open(filename, "r")
-    if not file then
-        -- no problem, it's just not there
-        -- TODO: or parse err?
-        return
-    end
-    thirsty.players = {}
-    for line in file:lines() do
-        if string.match(line, '^%-%-') then
-            -- comment, ignore
-        elseif string.match(line, '^P [%d.]+ [%d.]+ .+') then
-            -- player line
-            -- is matching again really the best solution?
-            local hydro, dmg, name = string.match(line, '^P ([%d.]+) ([%d.]+) (.+)')
-            thirsty.players[name] = {
-                hydro = tonumber(hydro),
-                last_pos = '0:0', -- not true, but no matter
-                time_in_pos = 0.0,
-                pending_dmg = tonumber(dmg),
-                thirst_factor = 1.0,
-            }
-        end
-    end
-    file:close()
-end
-
-function thirsty.write_stash()
-    local filename = minetest.get_worldpath() .. "/" .. thirsty.config.stash_filename
-    local file, err = io.open(filename, "w")
-    if not file then
-        minetest.log("error", "Thirsty: could not write " .. thirsty.config.stash_filename .. ": " ..err)
-        return
-    end
-    file:write('-- Stash file for Minetest mod [thirsty] --\n')
-    -- write players:
-    -- P <hydro> <pending_dmg> <name>
-    file:write('-- Player format: "P <hydro> <pending damage> <name>"\n')
-    for name, data in pairs(thirsty.players) do
-        file:write("P " .. data.hydro .. " " .. data.pending_dmg .. " " .. name .. "\n")
-    end
-    file:close()
-end
-
---[[
-
 General handler
 
 Most tools, nodes and craftitems use the same code, so here it is:
@@ -308,7 +258,8 @@ Most tools, nodes and craftitems use the same code, so here it is:
 
 function thirsty.drink_handler(player, itemstack, node)
     local pl = thirsty.players[player:get_player_name()]
-    local old_hydro = pl.hydro
+    local hydro = PPA.get_value(player, 'thirsty_hydro')
+    local old_hydro = hydro
 
     -- selectors, always true, to make the following code easier
     local item_name = itemstack and itemstack:get_name() or ':'
@@ -321,9 +272,7 @@ function thirsty.drink_handler(player, itemstack, node)
         -- drink until level
         local level = math.max(cont_level, node_level)
         --print("Drinking to level " .. level)
-        if pl.hydro < level then
-            pl.hydro = level
-        end
+        thirsty.drink(player, level, level)
 
         -- fill container, if applicable
         if thirsty.config.container_capacity[item_name] then
@@ -335,7 +284,7 @@ function thirsty.drink_handler(player, itemstack, node)
         -- drinking from a container
         if itemstack:get_wear() ~= 0 then
             local capacity = thirsty.config.container_capacity[item_name]
-            local hydro_missing = 20 - pl.hydro;
+            local hydro_missing = 20 - hydro;
             if hydro_missing > 0 then
                 local wear_missing = hydro_missing / capacity * 65535.0;
                 local wear         = itemstack:get_wear()
@@ -346,15 +295,16 @@ function thirsty.drink_handler(player, itemstack, node)
                 end
                 itemstack:set_wear(new_wear)
                 if wear_missing > 0 then -- rounding glitches?
-                    thirsty._drink(pl, wear_missing * capacity / 65535.0, 20)
+                    thirsty.drink(player, wear_missing * capacity / 65535.0, 20)
+                    hydro = PPA.get_value(player, 'thirsty_hydro')
                 end
             end
         end
     end
 
     -- update HUD if value changed
-    if pl.hydro ~= old_hydro then
-        thirsty.hud_update(player, pl.hydro)
+    if hydro ~= old_hydro then
+        thirsty.hud_update(player, hydro)
     end
 end
 
