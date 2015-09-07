@@ -6,7 +6,7 @@ See init.lua for license.
 
 ]]
 
-local PPA = persistent_player_attributes
+local PPA = thirsty.persistent_player_attributes
 
 PPA.register({
     name = 'thirsty_hydro',

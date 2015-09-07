@@ -17,7 +17,7 @@ Any hud needs to define the following functions:
 
 ]]
 
-local PPA = persistent_player_attributes
+local PPA = thirsty.persistent_player_attributes
 
 function thirsty.hud_clamp(value)
     if value < 0 then
