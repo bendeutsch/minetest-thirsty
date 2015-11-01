@@ -1,105 +1,64 @@
 --[[
 
-Configuration for Thirsty.
+Configuration from default, moddir and worlddir, in that order.
 
 See init.lua for license.
 
 ]]
 
---[[
+-- change these for other mods
+local M = thirsty
+local modname = 'thirsty'
+local fileroot = modname
 
-Default values
+-- make sure config exists; keep constant reference to it
+local C = M.config or {}
+M.config = C
 
-]]
-
-thirsty.config = {
-
-    stash_filename = 'thirsty.dat',
-
-    tick_time = 0.5,
-
-    -- Tier 0
-    thirst_per_second = 1.0 / 20.0,
-    damage_per_second = 1.0 / 10.0, -- when out of hydration
-    stand_still_for_drink = 1.0,
-    stand_still_for_afk = 120.0, -- 2 Minutes
-
-    regen_from_node = {
-        -- value: hydration regen per second
-        ['default:water_source'] = 0.5,
-        ['default:water_flowing'] = 0.5,
-        ['default:river_water_source'] = 0.5,
-        ['default:river_water_flowing'] = 0.5,
-    },
-
-    -- which nodes can we drink from (given containers)
-    node_drinkable = {
-        ['default:water_source'] = true,
-        ['default:water_flowing'] = true,
-        ['default:river_water_source'] = true,
-        ['default:river_water_flowing'] = true,
-        ['thirsty:drinking_fountain'] = true,
-    },
-
-    drink_from_container = {
-        -- value: max hydration when drinking with item
-        ['thirsty:wooden_bowl'] = 25,
-        ['thirsty:steel_canteen'] = 25,
-        ['thirsty:bronze_canteen'] = 25,
-    },
-
-    container_capacity = {
-        -- value: hydro capacity in item
-        ['thirsty:steel_canteen'] = 40,
-        ['thirsty:bronze_canteen'] = 60,
-    },
-
-    drink_from_node = {
-        -- value: max hydration when drinking from node
-        ['thirsty:drinking_fountain'] = 30,
-    },
-
-    -- fountains are marked with 'f', water with 'w'
-    -- to determine the fountain level
-    fountain_type = {
-        ['thirsty:water_fountain'] = 'f',
-        ['thirsty:water_extender'] = 'f',
-        ['default:water_source'] = 'w',
-        ['default:water_flowing'] =  'w',
-        ['default:river_water_source'] = 'w',
-        ['default:river_water_flowing'] =  'w',
-    },
-    regen_from_fountain = 0.5, -- compare regen_from_node
-    fountain_height = 4,
-    fountain_max_level = 20,
-    fountain_distance_per_level = 5,
-
-    extraction_for_item = {
-        ['thirsty:extractor']= 0.6,
-    },
-    injection_for_item = {
-        ['thirsty:injector'] = 0.5,
-    },
-
-    register_vessels = true,
-    register_bowl = true,
-    register_canteens = true,
-    register_drinking_fountain = true,
-    register_fountains = true,
-    register_amulets = true,
-
-}
-
--- read more configuration from thirsty.conf
-
-local filename = minetest.get_modpath('thirsty') .. "/thirsty.conf"
-local file, err = io.open(filename, 'r')
-if file then
-    file:close() -- was just for checking existance
-    local confcode, err = loadfile(filename)
-    if confcode then
-        confcode()
-    else
-        minetest.log("error", "Could not load thirsty.conf: " .. err)
+local function try_config_file(filename)
+    --print("Config from "..filename)
+    local file, err = io.open(filename, 'r')
+    if file then
+        file:close() -- was just for checking existance
+        local confcode, err = loadfile(filename)
+        if confcode then
+            confcode()
+            if C ~= M.config then
+                -- M.config was overriden, merge
+                for key, value in pairs(M.config) do
+                    if type(value) == 'table' and type(C[key]) == 'table' and not value.CLEAR then
+                        for k, v in pairs(value) do
+                            C[key][k] = value[k]
+                        end
+                    else
+                        -- copy (not a table, or asked to clear)
+                        C[key] = value
+                    end
+                end
+            else
+                -- no override? Empty, or file knows what it is doing.
+            end
+        else
+            minetest.log("error", "Could not load " .. filename .. ": " .. err)
+        end
     end
 end
+
+-- read starting configuration from <modname>.default.conf
+try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".default.conf")
+
+-- next, install-specific copy in modpath
+try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".conf")
+
+-- last, world-specific copy in worldpath
+try_config_file(minetest.get_worldpath() .. "/" .. fileroot .. ".conf")
+
+-- remove any special keys from tables
+for key, value in pairs(C) do
+    if type(value) == 'table' then
+        value.CLEAR = nil
+    end
+end
+
+-- write back
+M.config = C

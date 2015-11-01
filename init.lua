@@ -40,7 +40,7 @@ thirsty = {
 
     -- Configuration variables
     config = {
-        -- see configuration.lua
+        -- configuration in thirsty.default.conf
     },
 
     -- the players' values
@@ -70,10 +70,13 @@ thirsty = {
     -- general settings
     time_next_tick = 0.0,
 }
-
-dofile(minetest.get_modpath('thirsty')..'/persistent_player_attributes.lua')
+local M = thirsty
 
 dofile(minetest.get_modpath('thirsty')..'/configuration.lua')
+local C = M.config
+
+dofile(minetest.get_modpath('thirsty')..'/persistent_player_attributes.lua')
+local PPA = M.persistent_player_attributes
 
 thirsty.time_next_tick = thirsty.config.tick_time
 
@@ -85,10 +88,4 @@ minetest.register_on_dieplayer(thirsty.on_dieplayer)
 minetest.register_globalstep(thirsty.main_loop)
 
 dofile(minetest.get_modpath('thirsty')..'/components.lua')
-
--- read on startup
---thirsty.read_stash()
--- write on shutdown
---minetest.register_on_shutdown(thirsty.write_stash)
-
 
