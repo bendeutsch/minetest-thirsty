@@ -22,6 +22,7 @@ on use.
 
 ]]
 
+
 if minetest.get_modpath("vessels") and thirsty.config.register_vessels then
     -- add "drinking" to vessels
     thirsty.augment_item_for_drinking('vessels:drinking_glass', 22)
@@ -41,8 +42,8 @@ if minetest.get_modpath("default") and thirsty.config.register_bowl then
     minetest.register_craft({
         output = "thirsty:wooden_bowl",
         recipe = {
-            {"group:wood", "", "group:wood"},
-            {"", "group:wood", ""}
+            {moditems.GROUP_WOOD, "", moditems.GROUP_WOOD },
+            {"", moditems.GROUP_WOOD, "" }
         }
     })
 end
@@ -62,7 +63,9 @@ Wear corresponds to hydro level as follows:
 
 ]]
 
-if minetest.get_modpath("default") and thirsty.config.register_canteens then
+-- the game must explicitly define component recipes in order to run now, thus "default" evaluation lost its purpose now.
+
+if thirsty.config.register_canteens then
 
     minetest.register_tool('thirsty:steel_canteen', {
         description = 'Steel canteen',
@@ -83,17 +86,17 @@ if minetest.get_modpath("default") and thirsty.config.register_canteens then
     minetest.register_craft({
         output = "thirsty:steel_canteen",
         recipe = {
-            { "group:wood", ""},
-            { "default:steel_ingot", "default:steel_ingot"},
-            { "default:steel_ingot", "default:steel_ingot"}
+            { moditems.GROUP_WOOD, ""},
+            { moditems.IRON_ITEM, moditems.IRON_ITEM },
+            { moditems.IRON_ITEM, moditems.IRON_ITEM }
         }
     })
     minetest.register_craft({
         output = "thirsty:bronze_canteen",
         recipe = {
-            { "group:wood", ""},
-            { "default:bronze_ingot", "default:bronze_ingot"},
-            { "default:bronze_ingot", "default:bronze_ingot"}
+            { moditems.GROUP_WOOD, ""},
+            { moditems.COPPER_ITEM, moditems.COPPER_ITEM },
+            { moditems.COPPER_ITEM, moditems.COPPER_ITEM }
         }
     })
 
@@ -105,7 +108,9 @@ Tier 3
 
 ]]
 
-if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirsty.config.register_drinking_fountain then
+-- the game must explicitly define component recipes in order to run now, thus "default" evaluation lost its purpose now.
+
+if thirsty.config.register_drinking_fountain then
 
     minetest.register_node('thirsty:drinking_fountain', {
         description = 'Drinking fountain',
@@ -144,9 +149,9 @@ if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirst
     minetest.register_craft({
         output = "thirsty:drinking_fountain",
         recipe = {
-            { "default:stone", "bucket:bucket_water", "default:stone"},
-            { "", "default:stone", ""},
-            { "", "default:stone", ""}
+            { moditems.STONE_ITEM, moditems.WATERBUCKET_ITEM, moditems.STONE_ITEM },
+            { "", moditems.STONE_ITEM, ""},
+            { "", moditems.STONE_ITEM, ""}
         }
     })
 
@@ -158,7 +163,7 @@ Tier 4+: the water fountains, plus extenders
 
 ]]
 
-if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirsty.config.register_fountains then
+if thirsty.config.register_fountains then
 
     minetest.register_node('thirsty:water_fountain', {
         description = 'Water fountain',
@@ -192,17 +197,17 @@ if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirst
     minetest.register_craft({
         output = "thirsty:water_fountain",
         recipe = {
-            { "default:copper_ingot", "bucket:bucket_water", "default:copper_ingot"},
-            { "", "default:copper_ingot", ""},
-            { "default:copper_ingot", "default:mese_crystal", "default:copper_ingot"}
+            { moditems.COPPER_ITEM, moditems.WATERBUCKET_ITEM, moditems.COPPER_ITEM },
+            { "", moditems.COPPER_ITEM, ""},
+            { moditems.COPPER_ITEM, moditems.MESECRYSTAL_ITEM, moditems.COPPER_ITEM }
         }
     })
     minetest.register_craft({
         output = "thirsty:water_extender",
         recipe = {
-            { "", "bucket:bucket_water", ""},
-            { "", "default:copper_ingot", ""},
-            { "default:copper_ingot", "default:mese_crystal", "default:copper_ingot"}
+            { "", moditems.WATERBUCKET_ITEM, "" },
+            { "", moditems.COPPER_ITEM, "" },
+            { moditems.COPPER_ITEM, moditems.MESECRYSTAL_ITEM, moditems.COPPER_ITEM }
         }
     })
 
@@ -225,7 +230,7 @@ they are searched for in player's inventories
 
 ]]
 
-if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirsty.config.register_amulets then
+if thirsty.config.register_amulets then
 
     minetest.register_craftitem('thirsty:injector', {
         description = 'Water injector',
@@ -234,9 +239,9 @@ if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirst
     minetest.register_craft({
         output = "thirsty:injector",
         recipe = {
-            { "default:diamond", "default:mese_crystal", "default:diamond"},
-            { "default:mese_crystal", "bucket:bucket_water", "default:mese_crystal"},
-            { "default:diamond", "default:mese_crystal", "default:diamond"}
+            { moditems.DIAMOND_ITEM, moditems.MESECRYSTAL_ITEM, moditems.DIAMOND_ITEM },
+            { moditems.MESECRYSTAL_ITEM, moditems.WATERBUCKET_ITEM, moditems.MESECRYSTAL_ITEM },
+            { moditems.DIAMOND_ITEM, moditems.MESECRYSTAL_ITEM, moditems.DIAMOND_ITEM }
         }
     })
 
@@ -247,9 +252,9 @@ if minetest.get_modpath("default") and minetest.get_modpath("bucket") and thirst
     minetest.register_craft({
         output = "thirsty:extractor",
         recipe = {
-            { "default:mese_crystal", "default:diamond", "default:mese_crystal"},
-            { "default:diamond", "bucket:bucket_water", "default:diamond"},
-            { "default:mese_crystal", "default:diamond", "default:mese_crystal"}
+            { moditems.MESECRYSTAL_ITEM, moditems.DIAMOND_ITEM, moditems.MESECRYSTAL_ITEM },
+            { moditems.DIAMOND_ITEM, moditems.WATERBUCKET_ITEM, moditems.DIAMOND_ITEM },
+            { moditems.MESECRYSTAL_ITEM, moditems.DIAMOND_ITEM, moditems.MESECRYSTAL_ITEM }
         }
     })
 

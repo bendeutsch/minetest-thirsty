@@ -35,6 +35,46 @@ is still called "thirst", but the visible bar is that of
 
 ]]
 
+
+moditems = {}  -- declare a var, somewhere at beginning but below intlib.lua call.
+
+if core.get_modpath("mcl_core") and mcl_core then -- means MineClone 2 is loaded, this is its core mod
+   moditems.GROUP_WOOD = "group:wood"  -- MCL version of group wood
+   moditems.IRON_ITEM = "mcl_core:iron_ingot"   -- MCL version of iron ingot
+   moditems.COPPER_ITEM = "mcl_core:gold_ingot"   -- MCL version of bronze ingot
+   moditems.STONE_ITEM = "mcl_core:stone"  -- MCL version of stone
+   moditems.WATERBUCKET_ITEM = "mcl_buckets:bucket_water"  -- MCL version of water buckets
+   moditems.MESECRYSTAL_ITEM = "mesecons:redstone" -- MCL version of mese mese crystal
+   moditems.DIAMOND_ITEM = "mcl_core:diamond"  -- MCL version of diamond
+
+	 moditems.WATER_SRC = "mcl_core:water_source"
+   moditems.WATER_FLOW = "mcl_core:water_flowing"
+   moditems.RIVER_WATER_SRC = "mclx_core:river_water_source"
+   moditems.RIVER_WATER_FLOW = "mclx_core:river_water_flowing"
+
+else         -- fallback, assume default (MineTest Game) is loaded, otherwise it will error anyway here.
+   moditems.GROUP_WOOD = "group:wood" -- group wood in stock MT
+   moditems.IRON_ITEM = "default:steel_ingot"    -- iron ingot in stock MT
+   moditems.COPPER_ITEM = "default:copper_ingot"   -- bronze ingot in stock MT
+   moditems.STONE_ITEM = "default:stone"  -- stone in stock MT
+   moditems.WATERBUCKET_ITEM = "bucket:bucket_water"  -- water buckets in stock MT
+   moditems.MESECRYSTAL_ITEM = "default:mese_crystal" -- mese crystal in stock MT
+   moditems.DIAMOND_ITEM = "default:diamond"  -- diamond in stock MT
+	 
+   moditems.WATER_SRC = "default:water_source"
+   moditems.WATER_FLOW = "default:water_flowing"
+   moditems.RIVER_WATER_SRC = "default:river_water_source"
+   moditems.RIVER_WATER_FLOW = "default:river_water_flowing"
+
+end
+
+
+
+
+
+
+
+
 -- the main module variable
 thirsty = {
 
