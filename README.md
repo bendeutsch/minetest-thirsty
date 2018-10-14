@@ -80,6 +80,9 @@ Dependencies
 * hud (optional): https://forum.minetest.net/viewtopic.php?f=11&t=6342 (see HUD.txt for configuration)
 * hudbars (optional): https://forum.minetest.net/viewtopic.php?f=11&t=11153
 * vessels (optional): https://forum.minetest.net/viewtopic.php?id=2574
+* mcl_core (optional): provided by Mineclone2 game (mod), see https://forum.minetest.net/viewtopic.php?f=50&t=16407
+* mcl_buckets (optional): provided by Mineclone2 game (mod)
+* mclx_core (optional): provided by Mineclone2 game (mod)
 
 Installation
 ------------
