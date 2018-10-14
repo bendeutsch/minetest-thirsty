@@ -44,14 +44,26 @@ local function try_config_file(filename)
     end
 end
 
+
+-- mineclone2 use special separate config, this has to do with variable visibility from read contents
+if core.get_modpath("mcl_core") and mcl_core then
 -- read starting configuration from <modname>.default.conf
-try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".default.conf")
+  try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".default.mclconf")
 
 -- next, install-specific copy in modpath
-try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".conf")
+  try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".mclconf")
+
+else
+-- read starting configuration from <modname>.default.conf
+  try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".default.conf")
+
+-- next, install-specific copy in modpath
+  try_config_file(minetest.get_modpath(modname) .. "/" .. fileroot .. ".conf")
+end
 
 -- last, world-specific copy in worldpath
-try_config_file(minetest.get_worldpath() .. "/" .. fileroot .. ".conf")
+  try_config_file(minetest.get_worldpath() .. "/" .. fileroot .. ".conf")
+
 
 -- remove any special keys from tables
 for key, value in pairs(C) do
