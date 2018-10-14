@@ -57,6 +57,10 @@ function thirsty.drink(player, value, max)
         hydro = math.min(hydro + value, max)
         --print("Drinking by "..value.." to "..hydro)
         PPA.set_value(player, 'thirsty_hydro', hydro)
+        -- play sound
+        if thirsty.config.register_sound then 
+            minetest.sound_play("freesound-drmaysta-heavy_swallow", { pos = player:getpos(), gain = 1.0, max_hear_distance = 10,})
+        end
         return true
     end
     return false
@@ -278,7 +282,14 @@ function thirsty.drink_handler(player, itemstack, node)
         if thirsty.config.container_capacity[item_name] then
             --print("Filling a " .. item_name .. " to " .. thirsty.config.container_capacity[item_name])
             itemstack:set_wear(1) -- "looks full"
-        end
+
+        -- change mcl or thirsty bowl to full version, but only if we not thirsty already.
+        elseif core.get_modpath("mcl_core") and mcl_core and thirsty.config.register_bowl and item_name == "mcl_core:bowl" and hydro <= 20 then
+                itemstack:replace("thirsty:mcl_bowl_water")
+
+        elseif core.get_modpath("default") and default and thirsty.config.register_bowl and item_name == "thirsty:wooden_bowl" and hydro <= 20 then
+                itemstack:replace("thirsty:wooden_bowl_water")
+        end  
 
     elseif thirsty.config.container_capacity[item_name] then
         -- drinking from a container
@@ -299,6 +310,23 @@ function thirsty.drink_handler(player, itemstack, node)
                     hydro = PPA.get_value(player, 'thirsty_hydro')
                 end
             end
+        end
+
+    elseif thirsty.config.drink_this[item_name] then
+        -- consume an instant-use item, this is regardless of thirst to allow player free the item.
+        print("drinking.....!")
+        
+        local drink_level = thirsty.config.drink_this[item_name] or 0
+        thirsty.drink(player, drink_level, drink_level)
+        -- replace some of the items with their water-free equivalents
+        if item_name == "thirsty:mcl_bowl_water" then
+            itemstack:replace("mcl_core:bowl")
+        elseif item_name == "thirsty:wooden_bowl_water" then
+            itemstack:replace("thirsty:wooden_bowl")
+        elseif item_name == "mcl_potions:potion_river_water" then
+            itemstack:replace("mcl_potions:glass_bottle")
+        elseif item_name == "mcl_potions:potion_water" then
+            itemstack:replace("mcl_potions:glass_bottle")
         end
     end
 

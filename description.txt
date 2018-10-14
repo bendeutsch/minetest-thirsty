@@ -1,2 +1,2 @@
-A mod that adds a "thirst" mechanic, similar to hunger.
+A mod that adds a "thirst" mechanic, similar to hunger. Compatible with Mineclone2.
 

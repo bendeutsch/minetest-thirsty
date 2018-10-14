@@ -1,4 +1,9 @@
 default?
+mcl_core?
+mcl_buckets?
+mclx_core?
+mcl_potions?
+mesecons?
 bucket?
 hud?
 hudbars?
