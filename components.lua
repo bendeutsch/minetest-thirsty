@@ -23,9 +23,9 @@ if core.get_modpath("mcl_core") and mcl_core then -- means MineClone 2 is loaded
 	 
 	 -- override default consumption of few MCL specific items to make drinking possible.
 	 
-	 minetest.override_item("mcl_potions:potion_river_water", { on_secondary_use = thirsty.on_use(nil), minetest.item_eat(0, "mcl_potions:glass_bottle") } )
+	 minetest.override_item("mcl_potions:potion_river_water", { on_secondary_use = thirsty.on_use(nil) } )
 	 
-	 minetest.override_item("mcl_potions:potion_water", { on_secondary_use = thirsty.on_use(nil), minetest.item_eat(0, "mcl_potions:glass_bottle") } )
+	 minetest.override_item("mcl_potions:potion_water", { on_secondary_use = thirsty.on_use(nil) } )
 	 
 else    -- fallback, assume default (MineTest Game) is loaded, otherwise it will error anyway here.
    thristyitems.GROUP_WOOD = "group:wood" -- group wood in stock MT
