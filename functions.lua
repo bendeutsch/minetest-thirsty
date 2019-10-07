@@ -7,6 +7,7 @@ See init.lua for license.
 ]]
 
 local PPA = thirsty.persistent_player_attributes
+local damage_enabled = minetest.settings:get_bool("enable_damage")
 
 PPA.register({
     name = 'thirsty_hydro',
@@ -19,7 +20,7 @@ function thirsty.on_joinplayer(player)
     local name = player:get_player_name()
     -- default entry for new players
     if not thirsty.players[name] then
-        local pos = player:getpos()
+        local pos = player:get_pos()
         thirsty.players[name] = {
             last_pos = math.floor(pos.x) .. ':' .. math.floor(pos.z),
             time_in_pos = 0.0,
@@ -98,7 +99,7 @@ function thirsty.main_loop(dtime)
             end
 
             local name = player:get_player_name()
-            local pos  = player:getpos()
+            local pos  = player:get_pos()
             local pl = thirsty.players[name]
             local hydro = PPA.get_value(player, 'thirsty_hydro')
 
@@ -217,7 +218,7 @@ function thirsty.main_loop(dtime)
             thirsty.hud_update(player, hydro)
 
             -- damage, if enabled
-            if minetest.setting_getbool("enable_damage") then
+            if damage_enabled then
                 -- maybe not the best way to do this, but it does mean
                 -- we can do anything with one tick loop
                 if hydro <= 0.0 and not pl_afk then
